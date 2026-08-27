@@ -2596,6 +2596,13 @@ window.addEventListener("resize", () => { passStorrelse(); tegn(); if (!$("#impo
     S.former.push(f);
     S.valgt = f.id;
   }
+  // Første besøk med et fullt bibliotek: legg to former på lerretet, så det
+  // står en sammenligning der i stedet for en tom flate.
+  if (ferskBase && !paaLerret().length) {
+    for (const f of iBiblioteket().slice(0, 2)) f.paaLerret = true;
+    $("#bibPanel").open = true;
+  }
+
   if (!S.former.some(f => f.id === S.valgt && f.paaLerret && !f.slettet)) {
     const p = paaLerret();
     S.valgt = p.length ? p[0].id : null;
