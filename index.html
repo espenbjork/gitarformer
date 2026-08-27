@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gitarformer</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1c2027;
+    --panel-2: #232830;
+    --panel-3: #2c323c;
+    --line: #333a45;
+    --text: #e8eaed;
+    --dim: #9aa3af;
+    --accent: #bd6a39;
+    --accent-2: #4a9fd9;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; overflow: hidden;
+  }
+
+  /* ---------- sidepanel ---------- */
+  #side {
+    width: 340px; min-width: 340px; height: 100vh; overflow-y: auto;
+    background: var(--panel); border-right: 1px solid var(--line);
+    padding: 0 0 60px;
+  }
+  #side h1 {
+    font-size: 14px; margin: 0; padding: 14px 16px; letter-spacing: .3px;
+    border-bottom: 1px solid var(--line); position: sticky; top: 0;
+    background: var(--panel); z-index: 5;
+  }
+  #side h1 span { color: var(--dim); font-weight: 400; }
+  details { border-bottom: 1px solid var(--line); }
+  summary {
+    padding: 10px 16px; cursor: pointer; font-weight: 600; user-select: none;
+    list-style: none; display: flex; align-items: center; gap: 8px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "\25B8"; color: var(--dim); font-size: 11px; transition: transform .15s; }
+  details[open] > summary::before { transform: rotate(90deg); }
+  summary:hover { background: var(--panel-2); }
+  .body { padding: 4px 16px 16px; }
+
+  label.row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin: 8px 0; color: var(--dim);
+  }
+  label.row > span:first-child { flex: 1; }
+  input[type="number"], input[type="text"], select {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 7px; font: inherit; width: 84px;
+  }
+  input[type="text"].wide, select.wide { width: 100%; }
+  select { width: 140px; }
+  input[type="range"] { width: 134px; accent-color: var(--accent); }
+  input[type="color"] {
+    width: 34px; height: 26px; padding: 0; border: 1px solid var(--line);
+    border-radius: 6px; background: none; cursor: pointer;
+  }
+  input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; }
+
+  button {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 9px; font: inherit; cursor: pointer;
+  }
+  button:hover { background: var(--panel-3); border-color: #4a5361; }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #1a0d03; font-weight: 600; }
+  button.primary:hover { background: #d17e4a; }
+  button.on { background: var(--accent-2); border-color: var(--accent-2); color: #041627; font-weight: 600; }
+  button.fare:hover { background: #5b2727; border-color: #8a3a3a; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .btns.grid2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+  .hint { color: var(--dim); font-size: 11.5px; margin: 8px 0 0; }
+  .hint b { color: #c3cad4; font-weight: 600; }
+  hr.sep { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+
+  /* ---------- formliste ---------- */
+  #liste { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .fitem {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+    border: 1px solid transparent; border-radius: 7px; cursor: pointer;
+    background: var(--panel-2);
+  }
+  .fitem:hover { background: var(--panel-3); }
+  .fitem.valgt { border-color: var(--accent); background: var(--panel-3); }
+  .fitem .prikk { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #0008; flex: none; }
+  .fitem .navn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fitem .oye { opacity: .5; padding: 0 2px; font-size: 13px; background: none; border: none; color: var(--text); }
+  .fitem.pa .oye { opacity: 1; }
+  .fitem .mini { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+  #tomliste { color: var(--dim); font-size: 12px; padding: 10px 0; }
+  .fitem .av { opacity: .45; padding: 0 2px; font-size: 12px; background: none; border: none; color: var(--text); }
+  .fitem .av:hover { opacity: 1; color: #e0857a; }
+
+  /* bibliotek */
+  textarea {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 7px; font: inherit; resize: vertical;
+  }
+  #bibTagger { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 4px; }
+  .tagg {
+    font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--dim);
+  }
+  .tagg:hover { color: var(--text); border-color: #4a5361; }
+  .tagg.pa { background: var(--accent); border-color: var(--accent); color: #1a0d03; font-weight: 600; }
+  .tagg b { font-weight: 400; opacity: .6; margin-left: 3px; }
+  #bibListe { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; max-height: 340px; overflow-y: auto; }
+  .bitem {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px;
+    background: var(--panel-2); border: 1px solid transparent;
+  }
+  .bitem.inne { border-color: #3d4a3a; }
+  .bitem .prikk { width: 12px; height: 12px; border-radius: 4px; border: 1px solid #0008; flex: none; }
+  .bitem .midt { flex: 1; min-width: 0; }
+  .bitem .navn { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bitem .under { color: var(--dim); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bitem button { padding: 3px 7px; font-size: 11px; }
+
+  /* sky */
+  .lampe { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--dim); }
+  .lampe.gronn { background: #6fbf73; }
+  .lampe.gul { background: #e0a763; }
+  .lampe.rod { background: #d98b8b; }
+
+  /* ---------- tabell ---------- */
+  table.stat { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  table.stat th { text-align: right; color: var(--dim); font-weight: 500; font-size: 11px; padding: 4px 3px; border-bottom: 1px solid var(--line); }
+  table.stat th:first-child { text-align: left; }
+  table.stat td { padding: 4px 3px; text-align: right; border-bottom: 1px solid #ffffff0d; }
+  table.stat td:first-child { text-align: left; color: var(--dim); }
+  table.stat td.d { color: var(--dim); font-size: 11px; }
+  table.stat .pluss { color: #6fbf73; }
+  table.stat .minus { color: #d98b8b; }
+  .kolfarge { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; border: 1px solid #0008; }
+
+  /* ---------- scene ---------- */
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topbar {
+    display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+    border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  #topbar .skille { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+  #topbar .strekk { flex: 1; }
+  #topbar button { padding: 5px 10px; }
+  #stagewrap { flex: 1; position: relative; overflow: hidden; }
+  #stage { display: block; width: 100%; height: 100%; }
+  #statusbar {
+    display: flex; align-items: center; gap: 14px; padding: 6px 12px;
+    border-top: 1px solid var(--line); background: var(--panel);
+    color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums;
+  }
+  #statusbar .strekk { flex: 1; }
+  #dropp {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    background: #0b0d10cc; border: 3px dashed var(--accent); z-index: 20;
+    font-size: 16px; color: var(--text);
+  }
+  #dropp.vis { display: flex; }
+
+  /* ---------- importoverlegg ---------- */
+  #import {
+    position: fixed; inset: 0; background: var(--bg); z-index: 50; display: flex;
+  }
+  #import[hidden] { display: none; }
+  #ipanel {
+    width: 340px; min-width: 340px; background: var(--panel);
+    border-right: 1px solid var(--line); overflow-y: auto; padding-bottom: 20px;
+    display: flex; flex-direction: column;
+  }
+  #ipanel h2 {
+    font-size: 14px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line);
+  }
+  #steps { list-style: none; margin: 0; padding: 10px 16px; display: flex; gap: 6px; border-bottom: 1px solid var(--line); }
+  #steps li {
+    flex: 1; text-align: center; font-size: 11px; color: var(--dim);
+    padding: 5px 2px; border-radius: 6px; background: var(--panel-2); border: 1px solid transparent;
+  }
+  #steps li.na { color: var(--text); border-color: var(--accent); background: var(--panel-3); }
+  #steps li.ferdig { color: #6fbf73; }
+  .istep { display: none; padding: 12px 16px; }
+  .istep.na { display: block; }
+  .inav { margin-top: auto; padding: 12px 16px; display: flex; gap: 6px; border-top: 1px solid var(--line); }
+  .inav .strekk { flex: 1; }
+  #iwrap { flex: 1; position: relative; overflow: hidden; background: #0f1114; }
+  #icanvas { display: block; width: 100%; height: 100%; }
+  #dropsone {
+    border: 2px dashed var(--line); border-radius: 10px; padding: 26px 14px; text-align: center;
+    color: var(--dim); cursor: pointer;
+  }
+  #dropsone:hover { border-color: var(--accent); color: var(--text); }
+  .metode { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+  .metode button { padding: 6px 4px; font-size: 12px; }
+  .advarsel { color: #e0a763; font-size: 11.5px; margin-top: 8px; }
+  .kvitt { position: absolute; left: 12px; bottom: 12px; background: #0b0d10cc; border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 10px; font-size: 11.5px; color: var(--dim); pointer-events: none; }
+</style>
+</head>
+<body>
+
+<aside id="side">
+  <h1>Gitarformer <span>omriss og sammenligning</span></h1>
+
+  <details open>
+    <summary>Former</summary>
+    <div class="body">
+      <div class="btns grid2">
+        <button id="nyFraBilde" class="primary">Fra bilde</button>
+        <button id="nyGenerisk">Generisk</button>
+      </div>
+      <div id="liste"></div>
+      <div id="tomliste"></div>
+    </div>
+  </details>
+
+  <details id="bibPanel">
+    <summary>Bibliotek</summary>
+    <div class="body">
+      <input type="text" id="bibSok" class="wide" placeholder="Søk i navn, tagger og notat">
+      <div id="bibTagger"></div>
+      <div id="bibListe"></div>
+      <p class="hint" id="bibInfo"></p>
+    </div>
+  </details>
+
+  <details open id="formPanel">
+    <summary>Valgt form</summary>
+    <div class="body" id="formBody">
+      <label class="row"><span>Navn</span><input type="text" class="wide" id="fNavn" style="width:150px"></label>
+      <label class="row"><span>Farge</span><input type="color" id="fFarge"></label>
+      <label class="row"><span>Strektykkelse</span><input type="range" id="fStrek" min="0.5" max="6" step="0.5"></label>
+      <label class="row"><span>Stiplet strek</span><input type="checkbox" id="fStiplet"></label>
+      <label class="row"><span>Fyll</span><input type="checkbox" id="fFyll"></label>
+      <label class="row"><span>Fyllstyrke</span><input type="range" id="fOpasitet" min="0.05" max="1" step="0.05"></label>
+      <hr class="sep">
+      <label class="row"><span>Rotasjon</span><input type="range" id="fRot" min="-180" max="180" step="0.5"></label>
+      <label class="row"><span>Grader</span><input type="number" id="fRotTall" step="0.5"></label>
+      <label class="row"><span>Speilvend</span><input type="checkbox" id="fSpeil"></label>
+      <p class="hint">Rotasjonen dreier bare visningen. Målene under leses av formens egen ramme, så store dreininger hører hjemme i importen, ikke her.</p>
+      <label class="row"><span>Halsenden er</span>
+        <select id="fHals"><option value="topp">topp</option><option value="bunn">bunn</option></select>
+      </label>
+      <hr class="sep">
+      <label class="row"><span>Tagger</span><input type="text" id="fTagger" placeholder="or, strat, 2026" style="width:150px"></label>
+      <label class="row" style="align-items:flex-start"><span>Notat</span><textarea id="fNotat" rows="3" style="width:150px"></textarea></label>
+      <hr class="sep">
+      <label class="row"><span>Bredde (mm)</span><input type="number" id="fBredde" step="1"></label>
+      <label class="row"><span>Lengde (mm)</span><input type="number" id="fLengde" step="1"></label>
+      <label class="row"><span>Lås sideforhold</span><input type="checkbox" id="fLas" checked></label>
+      <label class="row"><span>Kroppstykkelse (mm)</span><input type="number" id="fTykk" step="1"></label>
+      <hr class="sep">
+      <label class="row"><span>Vis referansebilde</span><input type="checkbox" id="fBilde"></label>
+      <div class="btns grid2" id="punktrad" hidden>
+        <button id="fMerkAlle">Marker alle</button>
+        <button id="fSlettMerkede" class="fare">Slett markerte</button>
+      </div>
+      <div class="btns grid2">
+        <button id="fPunkter">Rediger punkter</button>
+        <button id="fNullstillPos">Midtstill</button>
+        <button id="fDupliser">Dupliser</button>
+        <button id="fSlett" class="fare">Slett</button>
+      </div>
+      <p class="hint" id="fInfo"></p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Kanvas</summary>
+    <div class="body">
+      <div class="btns grid3">
+        <button data-tema="mork">Mørk</button>
+        <button data-tema="lys">Lys</button>
+        <button data-tema="blaakopi">Blåkopi</button>
+      </div>
+      <label class="row"><span>Bakgrunn</span><input type="color" id="kBg"></label>
+      <label class="row"><span>Rutenett</span><input type="checkbox" id="kRutenett"></label>
+      <label class="row"><span>Rutenettfarge</span><input type="color" id="kRutefarge"></label>
+      <label class="row"><span>Ruteavstand (mm)</span><input type="number" id="kRuteMm" min="1" max="100" step="1"></label>
+      <label class="row"><span>Senterkors</span><input type="checkbox" id="kSenter"></label>
+      <label class="row"><span>Målestokk</span><input type="checkbox" id="kMalestokk"></label>
+      <hr class="sep">
+      <label class="row"><span>Juster former etter</span>
+        <select id="kJuster">
+          <option value="senter">midtpunkt</option>
+          <option value="topp">halsenden</option>
+          <option value="bunn">bunnen</option>
+          <option value="fri">fri plassering</option>
+        </select>
+      </label>
+      <p class="hint">Med <b>fri plassering</b> kan du dra hver form dit du vil med flytteverktøyet.</p>
+    </div>
+  </details>
+
+  <details open>
+    <summary>Mål og sammenligning</summary>
+    <div class="body">
+      <label class="row"><span>Sammenlign mot</span><select id="mRef" class="wide" style="width:150px"></select></label>
+      <label class="row"><span>Treslag</span><select id="mTre" style="width:150px"></select></label>
+      <div id="stats"></div>
+      <p class="hint">Vekten gjelder en heltre kropp uten fresing, altså et tak, ikke et fasitsvar. Ekte emner varierer lett 20 prosent i tetthet.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Lagre og eksporter</summary>
+    <div class="body">
+      <div class="btns grid2">
+        <button id="eSvg" class="primary">SVG (1:1)</button>
+        <button id="ePng">PNG</button>
+        <button id="eJson">Lagre prosjekt</button>
+        <button id="iJson">Åpne prosjekt</button>
+      </div>
+      <p class="hint">SVG-en er i millimeter. Skriv den ut på 100 prosent, så er den i full størrelse og kan limes rett på emnet.</p>
+      <div class="btns"><button id="tomAlt" class="fare">Tøm lerretet</button></div>
+      <p class="hint">Det tømmer bare lerretet. Formene blir liggende i biblioteket.</p>
+    </div>
+  </details>
+
+  <details id="skyPanel">
+    <summary>Delt bibliotek</summary>
+    <div class="body">
+      <p class="hint" style="margin-top:0" id="skyStatus"></p>
+      <label class="row"><span>Synk automatisk</span><input type="checkbox" id="skyAuto"></label>
+      <div class="btns grid2">
+        <button id="skyNa" class="primary">Hent og synk</button>
+        <button id="skyTest">Test kobling</button>
+      </div>
+      <hr class="sep">
+      <label class="row"><span>Adresse</span><input type="text" id="skyUrl" style="width:150px"></label>
+      <label class="row"><span>Token for skriving</span><input type="password" id="skyToken" placeholder="bare for å publisere" style="width:150px"></label>
+      <p class="hint">Biblioteket er <b>åpent å lese</b>. Alle som åpner siden får ned formene som ligger der, og kan bygge videre på dem hos seg selv. <b>Å legge noe inn i det krever token</b>, og det finnes bare i Espens egen nettleser. Uten token blir dine egne former liggende her, i din nettleser, og ingen andre ser dem. Referansebildene deles aldri.</p>
+    </div>
+  </details>
+</aside>
+
+<main id="main">
+  <div id="topbar">
+    <button data-verktoy="pan" class="on" title="Panorer (mellomrom + dra)">Flytt utsnitt</button>
+    <button data-verktoy="flytt" title="Dra den valgte formen">Flytt form</button>
+    <button data-verktoy="punkt" title="Dra, legg til og slett punkter">Punkter</button>
+    <button data-verktoy="mal" title="Mål avstand mellom to punkter">Mål</button>
+    <div class="skille"></div>
+    <button id="zoomUt">-</button>
+    <button id="zoomInn">+</button>
+    <button id="tilpass">Tilpass</button>
+    <div class="skille"></div>
+    <button id="kunValgt" title="Skjul alle andre former">Kun valgt</button>
+    <div class="strekk"></div>
+    <span id="zoomTall" style="color:var(--dim);font-size:11.5px"></span>
+  </div>
+  <div id="stagewrap">
+    <canvas id="stage"></canvas>
+    <div id="dropp">Slipp bildet her</div>
+  </div>
+  <div id="statusbar">
+    <span id="sPos">0, 0 mm</span>
+    <span id="sMal"></span>
+    <div class="strekk"></div>
+    <span id="sHint">Rull for å zoome. Mellomrom og dra for å panorere.</span>
+  </div>
+</main>
+
+<div id="import" hidden>
+  <aside id="ipanel">
+    <h2 id="iTittel">Ny form fra bilde</h2>
+    <ol id="steps">
+      <li data-s="1">1 Bilde</li><li data-s="2">2 Vinkel</li><li data-s="3">3 Omriss</li><li data-s="4">4 Mål</li>
+    </ol>
+
+    <div class="istep" data-s="1">
+      <div id="dropsone">Klikk for å velge bilde<br><span style="font-size:11.5px">eller slipp det her, eller lim inn med Cmd+V</span></div>
+      <p class="hint">Bruk et bilde tatt rett forfra hvis du kan. Er det tatt på skrå, retter du det opp i neste steg.</p>
+    </div>
+
+    <div class="istep" data-s="2">
+      <p class="hint" style="margin-top:0">Dra de fire hjørnene slik at rammen følger gitarens eget plan, altså slik at den ville vært et rektangel sett rett forfra. Rutene inni hjelper deg å se når det stemmer.</p>
+      <label class="row"><span>Rotasjon</span><input type="range" id="iRot" min="-45" max="45" step="0.5" value="0"></label>
+      <label class="row"><span>Grader</span><input type="number" id="iRotTall" step="0.5" value="0"></label>
+      <label class="row"><span>Hjelperuter</span><input type="checkbox" id="iRuter" checked></label>
+      <label class="row"><span>Speil vannrett</span><input type="checkbox" id="iSpeil"></label>
+      <div class="btns"><button id="iNullstill">Nullstill rammen</button><button id="iHele">Hele bildet</button></div>
+      <p class="hint">Trenger bildet ingen retting, trykk <b>Hele bildet</b> og gå videre.</p>
+    </div>
+
+    <div class="istep" data-s="3">
+      <div class="metode">
+        <button data-metode="tryllestav" class="on">Tryllestav</button>
+        <button data-metode="terskel">Terskel</button>
+        <button data-metode="tegn">Tegn selv</button>
+      </div>
+      <div id="mTryllestav">
+        <p class="hint" style="margin-top:0">Klikk på bakgrunnen i bildet. Alt som ligner nok på det du klikket blir borte, og det som er igjen blir omrisset. Klikk flere steder hvis bakgrunnen er flerfarget.</p>
+        <label class="row"><span>Toleranse</span><input type="range" id="iTol" min="4" max="120" step="1" value="34"></label>
+      </div>
+      <div id="mTerskel" hidden>
+        <p class="hint" style="margin-top:0">Skiller på lyshet. Passer på silhuetter og strektegninger.</p>
+        <label class="row"><span>Terskel</span><input type="range" id="iTerskel" min="1" max="254" step="1" value="128"></label>
+        <label class="row"><span>Snu</span><input type="checkbox" id="iSnu"></label>
+      </div>
+      <div id="mTegn" hidden>
+        <p class="hint" style="margin-top:0">Klikk rundt kanten av gitaren. Punktene bindes sammen i den rekkefølgen du setter dem. Angre siste med Cmd+Z.</p>
+        <div class="btns"><button id="iTegnTom">Start på nytt</button></div>
+      </div>
+      <hr class="sep">
+      <label class="row"><span>Rens småprikker</span><input type="range" id="iRens" min="0" max="5" step="1" value="1"></label>
+      <label class="row"><span>Forenkling</span><input type="range" id="iForenkl" min="0.3" max="6" step="0.1" value="1.4"></label>
+      <label class="row"><span>Glatting</span><input type="range" id="iGlatt" min="0" max="3" step="1" value="2"></label>
+      <label class="row"><span>Vis bilde bak</span><input type="checkbox" id="iVisBilde" checked></label>
+      <p class="hint" id="iKontinfo"></p>
+    </div>
+
+    <div class="istep" data-s="4">
+      <p class="hint" style="margin-top:0">Oppgi minst ett ekte mål, så kan formen sammenlignes med de andre. Er bildet perspektivrettet, bør du oppgi begge, for rettingen endrer sideforholdet.</p>
+      <label class="row"><span>Bredde (mm)</span><input type="number" id="iBredde" step="1" value="330"></label>
+      <label class="row"><span>Lengde (mm)</span><input type="number" id="iLengde" step="1"></label>
+      <label class="row"><span>Lås sideforhold</span><input type="checkbox" id="iLas" checked></label>
+      <hr class="sep">
+      <label class="row"><span>Navn</span><input type="text" id="iNavn" style="width:150px"></label>
+      <label class="row"><span>Farge</span><input type="color" id="iFarge"></label>
+      <label class="row"><span>Kroppstykkelse (mm)</span><input type="number" id="iTykk" step="1" value="45"></label>
+      <label class="row"><span>Halsenden er</span>
+        <select id="iHals"><option value="topp">topp</option><option value="bunn">bunn</option></select>
+      </label>
+      <p class="hint">Til referanse: en Stratocaster-kropp er omtrent 324 mm bred og 406 mm lang, en Les Paul omtrent 330 x 432 mm, en dreadnought omtrent 400 mm over nedre bue.</p>
+    </div>
+
+    <div class="inav">
+      <button id="iAvbryt">Avbryt</button>
+      <div class="strekk"></div>
+      <button id="iTilbake">Tilbake</button>
+      <button id="iNeste" class="primary">Neste</button>
+    </div>
+  </aside>
+  <div id="iwrap">
+    <canvas id="icanvas"></canvas>
+    <div class="kvitt" id="iKvitt"></div>
+  </div>
+</div>
+
+<input type="file" id="filvelger" accept="image/*" hidden>
+<input type="file" id="jsonvelger" accept="application/json,.json" hidden>
+<script>
+"use strict";
+
+/* =======================================================================
+   Små hjelpere
+   ======================================================================= */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const klem = (v, a, b) => v < a ? a : v > b ? b : v;
+const rund = (v, n) => { const p = Math.pow(10, n || 0); return Math.round(v * p) / p; };
+const nyId = () => "f" + Math.random().toString(36).slice(2, 9);
+
+function hexTilRgb(h) {
+  h = h.replace("#", "");
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+function rgba(hex, a) { const [r, g, b] = hexTilRgb(hex); return "rgba(" + r + "," + g + "," + b + "," + a + ")"; }
+function lyshet(hex) { const [r, g, b] = hexTilRgb(hex); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; }
+
+/* =======================================================================
+   Geometri
+   ======================================================================= */
+
+// Ramer-Douglas-Peucker
+function forenkl(pkt, eps) {
+  if (pkt.length < 3) return pkt.slice();
+  const behold = new Uint8Array(pkt.length);
+  behold[0] = behold[pkt.length - 1] = 1;
+  const stabel = [[0, pkt.length - 1]];
+  while (stabel.length) {
+    const [a, b] = stabel.pop();
+    let maks = 0, idx = -1;
+    const [ax, ay] = pkt[a], [bx, by] = pkt[b];
+    const dx = bx - ax, dy = by - ay;
+    const len = Math.hypot(dx, dy) || 1e-9;
+    for (let i = a + 1; i < b; i++) {
+      const d = Math.abs((pkt[i][0] - ax) * dy - (pkt[i][1] - ay) * dx) / len;
+      if (d > maks) { maks = d; idx = i; }
+    }
+    if (maks > eps && idx > 0) { behold[idx] = 1; stabel.push([a, idx], [idx, b]); }
+  }
+  const ut = [];
+  for (let i = 0; i < pkt.length; i++) if (behold[i]) ut.push(pkt[i]);
+  return ut;
+}
+
+// Chaikin på lukket polygon
+function glatt(pkt, ganger) {
+  let p = pkt;
+  for (let g = 0; g < ganger; g++) {
+    if (p.length < 4) break;
+    const ut = [];
+    for (let i = 0; i < p.length; i++) {
+      const a = p[i], b = p[(i + 1) % p.length];
+      ut.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
+      ut.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    p = ut;
+  }
+  return p;
+}
+
+// Sentripetal Catmull-Rom gjennom lukket punktliste
+function kurve(pkt, perSegment) {
+  const n = pkt.length, ut = [];
+  const seg = perSegment || 10;
+  for (let i = 0; i < n; i++) {
+    const p0 = pkt[(i - 1 + n) % n], p1 = pkt[i], p2 = pkt[(i + 1) % n], p3 = pkt[(i + 2) % n];
+    const d = (a, b) => Math.pow(Math.hypot(b[0] - a[0], b[1] - a[1]), 0.5) || 1e-4;
+    const t0 = 0, t1 = t0 + d(p0, p1), t2 = t1 + d(p1, p2), t3 = t2 + d(p2, p3);
+    for (let s = 0; s < seg; s++) {
+      const t = t1 + (t2 - t1) * (s / seg);
+      const a1 = [(t1 - t) / (t1 - t0) * p0[0] + (t - t0) / (t1 - t0) * p1[0], (t1 - t) / (t1 - t0) * p0[1] + (t - t0) / (t1 - t0) * p1[1]];
+      const a2 = [(t2 - t) / (t2 - t1) * p1[0] + (t - t1) / (t2 - t1) * p2[0], (t2 - t) / (t2 - t1) * p1[1] + (t - t1) / (t2 - t1) * p2[1]];
+      const a3 = [(t3 - t) / (t3 - t2) * p2[0] + (t - t2) / (t3 - t2) * p3[0], (t3 - t) / (t3 - t2) * p2[1] + (t - t2) / (t3 - t2) * p3[1]];
+      const b1 = [(t2 - t) / (t2 - t0) * a1[0] + (t - t0) / (t2 - t0) * a2[0], (t2 - t) / (t2 - t0) * a1[1] + (t - t0) / (t2 - t0) * a2[1]];
+      const b2 = [(t3 - t) / (t3 - t1) * a2[0] + (t - t1) / (t3 - t1) * a3[0], (t3 - t) / (t3 - t1) * a2[1] + (t - t1) / (t3 - t1) * a3[1]];
+      ut.push([(t2 - t) / (t2 - t1) * b1[0] + (t - t1) / (t2 - t1) * b2[0], (t2 - t) / (t2 - t1) * b1[1] + (t - t1) / (t2 - t1) * b2[1]]);
+    }
+  }
+  return ut;
+}
+
+function areal(pkt) {
+  let a = 0;
+  for (let i = 0, n = pkt.length; i < n; i++) {
+    const p = pkt[i], q = pkt[(i + 1) % n];
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return Math.abs(a) / 2;
+}
+function omkrets(pkt) {
+  let s = 0;
+  for (let i = 0, n = pkt.length; i < n; i++) {
+    const p = pkt[i], q = pkt[(i + 1) % n];
+    s += Math.hypot(q[0] - p[0], q[1] - p[1]);
+  }
+  return s;
+}
+function boks(pkt) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of pkt) { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1]; }
+  return { x0, y0, x1, y1, b: x1 - x0, h: y1 - y0, mx: (x0 + x1) / 2, my: (y0 + y1) / 2 };
+}
+
+// Bredden på polygonet i hver av n skiver langs y-aksen
+function breddeprofil(pkt, n) {
+  const bb = boks(pkt), ut = new Array(n).fill(0);
+  if (bb.h <= 0) return ut;
+  for (let i = 0; i < n; i++) {
+    const y = bb.y0 + bb.h * ((i + 0.5) / n);
+    let lo = Infinity, hi = -Infinity;
+    for (let k = 0, m = pkt.length; k < m; k++) {
+      const a = pkt[k], b = pkt[(k + 1) % m];
+      if ((a[1] <= y && b[1] > y) || (b[1] <= y && a[1] > y)) {
+        const t = (y - a[1]) / (b[1] - a[1]);
+        const x = a[0] + t * (b[0] - a[0]);
+        if (x < lo) lo = x;
+        if (x > hi) hi = x;
+      }
+    }
+    ut[i] = hi > lo ? hi - lo : 0;
+  }
+  return ut;
+}
+
+// Buer og midje. halsTopp forteller hvilken ende halsen sitter i.
+function buemal(pkt, halsTopp) {
+  const n = 120;
+  let pr = breddeprofil(pkt, n);
+  if (!halsTopp) pr = pr.slice().reverse();       // regn alltid med halsen øverst
+  const bb = boks(pkt);
+  const nedreOmr = pr.slice(Math.floor(n * 0.5));
+  const ovreOmr = pr.slice(Math.floor(n * 0.08), Math.floor(n * 0.45));
+  const nedre = Math.max.apply(null, nedreOmr.concat([0]));
+  const ovre = Math.max.apply(null, ovreOmr.concat([0]));
+  const iNedre = Math.floor(n * 0.5) + nedreOmr.indexOf(nedre);
+  const iOvre = Math.floor(n * 0.08) + ovreOmr.indexOf(ovre);
+  const mellom = pr.slice(iOvre + 1, iNedre);
+  const midje = mellom.length ? Math.min.apply(null, mellom) : 0;
+  const iMidje = iOvre + 1 + mellom.indexOf(midje);
+  const yAv = i => halsTopp ? bb.y0 + bb.h * ((i + 0.5) / n) : bb.y1 - bb.h * ((i + 0.5) / n);
+  return { nedre, ovre, midje, yNedre: yAv(iNedre), yOvre: yAv(iOvre), yMidje: yAv(iMidje) };
+}
+
+/* =======================================================================
+   Bildebehandling
+   ======================================================================= */
+
+// Løser 8x8 med Gauss-eliminasjon
+function losLikning(A, b) {
+  const n = b.length;
+  for (let i = 0; i < n; i++) {
+    let p = i;
+    for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+    const piv = A[i][i];
+    if (Math.abs(piv) < 1e-12) continue;
+    for (let r = 0; r < n; r++) {
+      if (r === i) continue;
+      const f = A[r][i] / piv;
+      if (!f) continue;
+      for (let c = i; c < n; c++) A[r][c] -= f * A[i][c];
+      b[r] -= f * b[i];
+    }
+  }
+  return b.map((v, i) => Math.abs(A[i][i]) < 1e-12 ? 0 : v / A[i][i]);
+}
+
+// Matrise som tar (x,y) i målbildet og gir (u,v) i kildebildet
+function homografi(mal, kilde) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const [x, y] = mal[i], [u, v] = kilde[i];
+    A.push([x, y, 1, 0, 0, 0, -x * u, -y * u]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -x * v, -y * v]); b.push(v);
+  }
+  const h = losLikning(A, b);
+  return [h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]];
+}
+
+// Retter opp firkanten "quad" i kildebildet til et rektangel
+function rettOpp(kilde, quad, maksSide) {
+  const d = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]);
+  let W = (d(quad[0], quad[1]) + d(quad[3], quad[2])) / 2;
+  let H = (d(quad[0], quad[3]) + d(quad[1], quad[2])) / 2;
+  const f = Math.min(1, maksSide / Math.max(W, H));
+  W = Math.max(8, Math.round(W * f)); H = Math.max(8, Math.round(H * f));
+
+  const src = document.createElement("canvas");
+  src.width = kilde.width; src.height = kilde.height;
+  src.getContext("2d").drawImage(kilde, 0, 0);
+  const sd = src.getContext("2d").getImageData(0, 0, src.width, src.height);
+  const sp = sd.data, sw = src.width, sh = src.height;
+
+  const ut = document.createElement("canvas");
+  ut.width = W; ut.height = H;
+  const uc = ut.getContext("2d");
+  const ud = uc.createImageData(W, H);
+  const up = ud.data;
+
+  const h = homografi([[0, 0], [W, 0], [W, H], [0, H]], quad);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const nevner = h[6] * x + h[7] * y + 1;
+      const u = (h[0] * x + h[1] * y + h[2]) / nevner;
+      const v = (h[3] * x + h[4] * y + h[5]) / nevner;
+      const i = (y * W + x) * 4;
+      if (u < 0 || v < 0 || u > sw - 1 || v > sh - 1) { up[i + 3] = 0; continue; }
+      const x0 = u | 0, y0 = v | 0, x1 = Math.min(x0 + 1, sw - 1), y1 = Math.min(y0 + 1, sh - 1);
+      const fx = u - x0, fy = v - y0;
+      for (let c = 0; c < 4; c++) {
+        const a = sp[(y0 * sw + x0) * 4 + c] * (1 - fx) + sp[(y0 * sw + x1) * 4 + c] * fx;
+        const b = sp[(y1 * sw + x0) * 4 + c] * (1 - fx) + sp[(y1 * sw + x1) * 4 + c] * fx;
+        up[i + c] = a * (1 - fy) + b * fy;
+      }
+    }
+  }
+  uc.putImageData(ud, 0, 0);
+  return ut;
+}
+
+// Flomfyll fra frø, alt innenfor toleransen blir bakgrunn. Gir maske der 1 = motiv.
+function tryllestav(bilde, fro, toleranse) {
+  const w = bilde.width, h = bilde.height;
+  const d = bilde.data;
+  const bak = new Uint8Array(w * h);
+  const kø = [];
+  const tol2 = toleranse * toleranse * 3;
+  for (const [fx, fy] of fro) {
+    const i = (fy | 0) * w + (fx | 0);
+    if (i < 0 || i >= w * h || bak[i]) continue;
+    const r0 = d[i * 4], g0 = d[i * 4 + 1], b0 = d[i * 4 + 2];
+    bak[i] = 1; kø.push(i);
+    while (kø.length) {
+      const p = kø.pop(), px = p % w, py = (p / w) | 0;
+      const naboer = [[px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]];
+      for (const [nx, ny] of naboer) {
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const ni = ny * w + nx;
+        if (bak[ni]) continue;
+        const dr = d[ni * 4] - r0, dg = d[ni * 4 + 1] - g0, db = d[ni * 4 + 2] - b0;
+        if (dr * dr + dg * dg + db * db <= tol2) { bak[ni] = 1; kø.push(ni); }
+      }
+    }
+  }
+  const maske = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) maske[i] = (bak[i] || d[i * 4 + 3] < 24) ? 0 : 1;
+  return maske;
+}
+
+function terskelmaske(bilde, t, snu) {
+  const w = bilde.width, h = bilde.height, d = bilde.data;
+  const m = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    if (d[i * 4 + 3] < 24) { m[i] = 0; continue; }
+    const l = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+    m[i] = (snu ? l > t : l < t) ? 1 : 0;
+  }
+  return m;
+}
+
+function morf(maske, w, h, r, utvid) {
+  if (!r) return maske;
+  // Separabel: en vannrett og en loddrett pass. Firkantet strukturelement.
+  const a = new Uint8Array(w * h), b = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = utvid ? 0 : 1;
+      for (let d = -r; d <= r; d++) {
+        const nx = x + d;
+        const m = (nx < 0 || nx >= w) ? 0 : maske[y * w + nx];
+        if (utvid) { if (m) { v = 1; break; } } else { if (!m) { v = 0; break; } }
+      }
+      a[y * w + x] = v;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = utvid ? 0 : 1;
+      for (let d = -r; d <= r; d++) {
+        const ny = y + d;
+        const m = (ny < 0 || ny >= h) ? 0 : a[ny * w + x];
+        if (utvid) { if (m) { v = 1; break; } } else { if (!m) { v = 0; break; } }
+      }
+      b[y * w + x] = v;
+    }
+  }
+  return b;
+}
+function rens(maske, w, h, r) {
+  if (!r) return maske;
+  let m = morf(maske, w, h, r, false);   // erosjon
+  m = morf(m, w, h, r * 2, true);        // utviding
+  m = morf(m, w, h, r, false);           // erosjon igjen
+  return m;
+}
+
+function storsteFlate(maske, w, h) {
+  const merket = new Int32Array(w * h).fill(-1);
+  let beste = -1, besteStr = 0;
+  const kø = new Int32Array(w * h);
+  let nr = 0;
+  for (let s = 0; s < w * h; s++) {
+    if (!maske[s] || merket[s] >= 0) continue;
+    let hode = 0, hale = 0;
+    kø[hale++] = s; merket[s] = nr;
+    let str = 0;
+    while (hode < hale) {
+      const p = kø[hode++]; str++;
+      const px = p % w, py = (p / w) | 0;
+      if (px > 0 && maske[p - 1] && merket[p - 1] < 0) { merket[p - 1] = nr; kø[hale++] = p - 1; }
+      if (px < w - 1 && maske[p + 1] && merket[p + 1] < 0) { merket[p + 1] = nr; kø[hale++] = p + 1; }
+      if (py > 0 && maske[p - w] && merket[p - w] < 0) { merket[p - w] = nr; kø[hale++] = p - w; }
+      if (py < h - 1 && maske[p + w] && merket[p + w] < 0) { merket[p + w] = nr; kø[hale++] = p + w; }
+    }
+    if (str > besteStr) { besteStr = str; beste = nr; }
+    nr++;
+  }
+  if (beste < 0) return null;
+  const ut = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) ut[i] = merket[i] === beste ? 1 : 0;
+  return ut;
+}
+
+// Moore-nabosporing rundt ytterkanten
+function sporKontur(maske, w, h) {
+  let sx = -1, sy = -1;
+  for (let y = 0; y < h && sx < 0; y++) for (let x = 0; x < w; x++) if (maske[y * w + x]) { sx = x; sy = y; break; }
+  if (sx < 0) return null;
+  const N = [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+  const pa = (x, y) => (x >= 0 && y >= 0 && x < w && y < h) ? maske[y * w + x] : 0;
+  const ut = [];
+  let cx = sx, cy = sy, bx = sx - 1, by = sy;
+  let vakt = 8 * w * h;
+  while (vakt-- > 0) {
+    ut.push([cx, cy]);
+    let bi = 7;
+    for (let k = 0; k < 8; k++) if (N[k][0] === bx - cx && N[k][1] === by - cy) { bi = k; break; }
+    let fant = false;
+    for (let k = 1; k <= 8; k++) {
+      const i = (bi + k) % 8;
+      const nx = cx + N[i][0], ny = cy + N[i][1];
+      if (pa(nx, ny)) {
+        const pi = (i + 7) % 8;
+        bx = cx + N[pi][0]; by = cy + N[pi][1];
+        cx = nx; cy = ny; fant = true; break;
+      }
+    }
+    if (!fant) break;
+    if (cx === sx && cy === sy) break;
+  }
+  return ut.length > 8 ? ut : null;
+}
+
+/* =======================================================================
+   Tilstand
+   ======================================================================= */
+const GAMMEL_NOKKEL = "gitarformer.v1";      // localStorage, bare til overføring
+const INNST = "gitarformer.innstillinger";
+const BASE_NAVN = "gitarformer";
+const BASE_VERSJON = 1;
+
+const TRESLAG = [
+  ["or", 450], ["lind", 420], ["osp", 450], ["sumpask", 480], ["mahogni", 550],
+  ["korina", 550], ["ask", 670], ["lønn", 690], ["valnøtt", 640], ["gran", 430],
+  ["eik", 720], ["bjørk", 640]
+];
+
+const PALETT = ["#bd6a39", "#4a9fd9", "#8fbf6f", "#d9b04a", "#c46fa8", "#6fc9c0", "#e0705f", "#9b8fd9"];
+
+const TEMA = {
+  mork:     { bg: "#12151a", rutefarge: "#2a303a" },
+  lys:      { bg: "#f3f1ec", rutefarge: "#cfc9bd" },
+  blaakopi: { bg: "#123a5e", rutefarge: "#3f6d95" }
+};
+
+const S = {
+  former: [],            // hele biblioteket. `paaLerret` avgjør hva som tegnes.
+  valgt: null,
+  verktoy: "pan",
+  kunValgt: false,
+  visning: { zoom: 1.1, panX: 0, panY: 0 },
+  kanvas: { bg: "#12151a", rutenett: true, rutefarge: "#2a303a", ruteMm: 10, senter: true, malestokk: true, juster: "senter" },
+  tre: "or",
+  ref: null,
+  sok: "", filtertagger: new Set()
+};
+
+const sky = {
+  url: "https://gitarformer.dreampodcast.workers.dev",
+  token: "", sist: null, auto: true,
+  tilstand: "ukjent", melding: ""
+};
+
+const na = () => new Date().toISOString();
+const paaLerret = () => S.former.filter(f => f.paaLerret && !f.slettet);
+const synligeFormer = () => paaLerret().filter(f => f.synlig && (!S.kunValgt || f.id === S.valgt));
+const iBiblioteket = () => S.former.filter(f => !f.slettet);
+
+function normaliserForm(f) {
+  const g = Object.assign({
+    id: nyId(), navn: "Form", farge: PALETT[0], synlig: true, fyll: false, opasitet: 0.18,
+    strek: 2, stiplet: false, pkt: [], rot: 0, speil: false, halsTopp: true,
+    tykkelse: 45, forskyv: [0, 0], bilde: null, visBilde: false,
+    tagger: [], notat: "", paaLerret: true, slettet: false,
+    opprettet: null, endret: null, synketTil: null
+  }, f);
+  if (!g.opprettet) g.opprettet = na();
+  if (!g.endret) g.endret = g.opprettet;
+  if (!Array.isArray(g.tagger)) g.tagger = [];
+  return g;
+}
+
+/* =======================================================================
+   Basen: IndexedDB lokalt
+   ======================================================================= */
+let idb = null;
+
+function apneBase() {
+  return new Promise((ja, nei) => {
+    const b = indexedDB.open(BASE_NAVN, BASE_VERSJON);
+    b.onupgradeneeded = () => {
+      const d = b.result;
+      if (!d.objectStoreNames.contains("former")) d.createObjectStore("former", { keyPath: "id" });
+      if (!d.objectStoreNames.contains("meta")) d.createObjectStore("meta", { keyPath: "n" });
+    };
+    b.onsuccess = () => { idb = b.result; ja(idb); };
+    b.onerror = () => nei(b.error);
+  });
+}
+function tx(butikk, modus) { return idb.transaction(butikk, modus).objectStore(butikk); }
+function lovnad(f) { return new Promise((ja, nei) => { const r = f(); r.onsuccess = () => ja(r.result); r.onerror = () => nei(r.error); }); }
+
+const basen = {
+  alle: () => lovnad(() => tx("former", "readonly").getAll()),
+  hent: id => lovnad(() => tx("former", "readonly").get(id)),
+  skriv(poster) {
+    if (!poster.length) return Promise.resolve();
+    return new Promise((ja, nei) => {
+      const t = idb.transaction("former", "readwrite");
+      const b = t.objectStore("former");
+      for (const p of poster) b.put(p);
+      t.oncomplete = ja; t.onerror = () => nei(t.error);
+    });
+  }
+};
+
+/* =======================================================================
+   Lagring
+   ======================================================================= */
+function lagreInnstillinger() {
+  try {
+    localStorage.setItem(INNST, JSON.stringify({
+      kanvas: S.kanvas, tre: S.tre, ref: S.ref, visning: S.visning, valgt: S.valgt,
+      sky: { url: sky.url, token: sky.token, sist: sky.sist, auto: sky.auto }
+    }));
+  } catch (e) { /* innstillinger er ikke verdt en feilmelding */ }
+}
+function hentInnstillinger() {
+  try {
+    const d = JSON.parse(localStorage.getItem(INNST) || "null");
+    if (!d) return;
+    Object.assign(S.kanvas, d.kanvas || {});
+    if (d.visning) Object.assign(S.visning, d.visning);
+    S.tre = d.tre || "or"; S.ref = d.ref || null; S.valgt = d.valgt || null;
+    if (d.sky) Object.assign(sky, d.sky);
+  } catch (e) { /* samme */ }
+}
+
+// Fingeravtrykk uten bildet og uten tidsstemplene, så bare ekte endringer teller.
+const HOPP_OVER = new Set(["bilde", "visBilde", "endret", "synketTil", "forskyv", "synlig"]);
+function avtrykk(f) {
+  const o = {};
+  for (const k of Object.keys(f).sort()) if (!HOPP_OVER.has(k)) o[k] = f[k];
+  return JSON.stringify(o);
+}
+const sisteAvtrykk = new Map();
+let lagreTimer = null;
+
+function lagre() {
+  lagreInnstillinger();
+  clearTimeout(lagreTimer);
+  lagreTimer = setTimeout(skrivEndrede, 350);
+}
+async function skrivEndrede() {
+  if (!idb) return;
+  const endrede = [];
+  for (const f of S.former) {
+    const a = avtrykk(f);
+    if (sisteAvtrykk.get(f.id) === a) continue;
+    if (sisteAvtrykk.has(f.id)) f.endret = na();   // ny form har allerede fersk endret
+    sisteAvtrykk.set(f.id, avtrykk(f));
+    endrede.push(f);
+  }
+  if (!endrede.length) return;
+  try { await basen.skriv(endrede.map(f => JSON.parse(JSON.stringify(f)))); }
+  catch (e) { hint("Fikk ikke lagret lokalt: " + e); return; }
+  if (sky.auto && sky.token) synkSnart();
+  tegnSkystatus();
+}
+
+/** Gravstein, så slettingen når fram til de andre maskinene. */
+async function gravlegg(f) {
+  f.slettet = true; f.endret = na(); f.paaLerret = false;
+  sisteAvtrykk.set(f.id, avtrykk(f));
+  const post = JSON.parse(JSON.stringify(Object.assign({}, f, { bilde: null })));
+  try { await basen.skriv([post]); } catch (e) { /* den ligger i minnet uansett */ }
+  if (sky.auto && sky.token) synkSnart();
+}
+
+/** Flytter det som lå i localStorage inn i IndexedDB, én gang. */
+async function overforGammelt() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(GAMMEL_NOKKEL) || "null"); } catch (e) { return 0; }
+  if (!d || !Array.isArray(d.former) || !d.former.length) return 0;
+  const former = d.former.map(f => normaliserForm(f));
+  await basen.skriv(former.map(f => JSON.parse(JSON.stringify(f))));
+  if (d.kanvas) Object.assign(S.kanvas, d.kanvas);
+  if (d.tre) S.tre = d.tre;
+  localStorage.removeItem(GAMMEL_NOKKEL);
+  return former.length;
+}
+
+/* =======================================================================
+   Synk mot D1
+   ======================================================================= */
+let synkTimer = null, synkerNa = false, synkIgjen = false;
+
+function synkSnart() {
+  clearTimeout(synkTimer);
+  synkTimer = setTimeout(() => synk(true), 2500);
+}
+
+function tilApi(f) {
+  const m = (f.pkt && f.pkt.length > 2) ? malFor(f) : null;
+  return {
+    id: f.id, navn: f.navn, farge: f.farge,
+    punkter: f.pkt || [], rot: f.rot, speil: f.speil ? 1 : 0, hals_topp: f.halsTopp ? 1 : 0,
+    tykkelse: f.tykkelse, strek: f.strek, stiplet: f.stiplet ? 1 : 0,
+    fyll: f.fyll ? 1 : 0, opasitet: f.opasitet,
+    notat: f.notat || "", tagger: f.tagger || [],
+    lengde: m && m.lengde, bredde: m && m.bredde, nedre_bue: m && m.nedre,
+    midje: m && m.midje, ovre_bue: m && m.ovre, areal: m && m.areal,
+    opprettet: f.opprettet, endret: f.endret, slettet: f.slettet ? 1 : 0, kilde: "app"
+  };
+}
+
+/** Bygger en lokal form av en rad. Bildet og plasseringen er lokale og beholdes. */
+function fraApi(r, lokal) {
+  let pkt = [];
+  try { pkt = JSON.parse(r.punkter); } catch (e) { pkt = []; }
+  return normaliserForm({
+    id: r.id, navn: r.navn, farge: r.farge, pkt,
+    rot: r.rot, speil: !!r.speil, halsTopp: !!r.hals_topp, tykkelse: r.tykkelse,
+    strek: r.strek, stiplet: !!r.stiplet, fyll: !!r.fyll, opasitet: r.opasitet,
+    notat: r.notat || "", tagger: r.tagger || [],
+    opprettet: r.opprettet, endret: r.endret, synketTil: r.endret, slettet: !!r.slettet,
+    bilde: lokal ? lokal.bilde : null,
+    visBilde: lokal ? lokal.visBilde : false,
+    forskyv: lokal ? lokal.forskyv.slice() : [0, 0],
+    synlig: lokal ? lokal.synlig : true,
+    // En form hentet fra skya legger seg i biblioteket, ikke rett på lerretet.
+    paaLerret: lokal ? lokal.paaLerret : false
+  });
+}
+
+async function skyKall(sti, valg) {
+  const styr = new AbortController();
+  const klokke = setTimeout(() => styr.abort(), 15000);
+  try {
+    // Headerne må slås sammen for seg. Legger man dem i det ytre objektet,
+    // overskriver et kall med egen Content-Type hele bunten, og Authorization
+    // forsvinner uten at noe annet ser galt ut.
+    const opp = Object.assign({}, valg || {});
+    opp.signal = styr.signal;
+    opp.headers = Object.assign(
+      sky.token ? { "Authorization": "Bearer " + sky.token } : {},
+      (valg && valg.headers) || {}
+    );
+    const r = await fetch(sky.url.replace(/\/$/, "") + sti, opp);
+    const tekst = await r.text();
+    let data = null;
+    try { data = JSON.parse(tekst); } catch (e) { /* la data være null */ }
+    if (!r.ok) throw new Error((data && data.feil) || ("HTTP " + r.status));
+    return data;
+  } finally { clearTimeout(klokke); }
+}
+
+async function synk(stille) {
+  if (!sky.url) {
+    sky.tilstand = "avslaatt"; sky.melding = "ingen adresse"; tegnSkystatus(); return false;
+  }
+  if (synkerNa) { synkIgjen = true; return false; }
+  synkerNa = true;
+  sky.tilstand = "jobber"; sky.melding = "synker"; tegnSkystatus();
+  try {
+    // 1. Send alt som er endret siden forrige vellykkede sending.
+    //    Uten token er dette en ren nedlasting: biblioteket er åpent å lese,
+    //    men bare Espen kan legge noe i det.
+    const lokale = await basen.alle();
+    const aaSende = sky.token ? lokale.filter(r => r.endret !== r.synketTil) : [];
+    if (aaSende.length) {
+      for (let i = 0; i < aaSende.length; i += 100) {
+        const bit = aaSende.slice(i, i + 100);
+        await skyKall("/api/former", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ former: bit.map(tilApi) })
+        });
+        for (const r of bit) {
+          r.synketTil = r.endret;
+          const iMinnet = S.former.find(f => f.id === r.id);
+          if (iMinnet) iMinnet.synketTil = r.endret;
+        }
+        await basen.skriv(bit);
+      }
+    }
+
+    // 2. Hent alt som er endret på serveren siden sist.
+    const svar = await skyKall("/api/former" + (sky.sist ? "?siden=" + encodeURIComponent(sky.sist) : ""));
+    let nye = 0, oppdaterte = 0, fjernede = 0;
+    const skriv = [];
+    for (const rad of (svar.former || [])) {
+      const lokal = S.former.find(f => f.id === rad.id);
+      if (lokal && lokal.endret >= rad.endret) continue;   // vår er like fersk eller ferskere
+      const ny = fraApi(rad, lokal);
+      if (lokal) {
+        Object.assign(lokal, ny);
+        if (ny.slettet) fjernede++; else oppdaterte++;
+      } else if (!ny.slettet) {
+        S.former.push(ny); nye++;
+      } else {
+        continue;   // gravstein vi aldri har sett, ingen grunn til å ta vare på den
+      }
+      sisteAvtrykk.set(ny.id, avtrykk(ny));
+      skriv.push(JSON.parse(JSON.stringify(ny)));
+    }
+    if (skriv.length) await basen.skriv(skriv);
+    if (S.valgt && !S.former.some(f => f.id === S.valgt && !f.slettet)) {
+      const p = paaLerret();
+      S.valgt = p.length ? p[0].id : null;
+    }
+
+    sky.sist = svar.tid;
+    sky.tilstand = "ok";
+    const deler = [];
+    if (aaSende.length) deler.push(aaSende.length + " sendt");
+    if (!sky.token && !nye && !oppdaterte && !fjernede) deler.push("ingenting nytt");
+    if (nye) deler.push(nye + " ny");
+    if (oppdaterte) deler.push(oppdaterte + " oppdatert");
+    if (fjernede) deler.push(fjernede + " fjernet");
+    sky.melding = deler.length ? deler.join(", ") : "alt likt";
+    lagreInnstillinger();
+    if (nye || oppdaterte || fjernede) { tegnListe(); tegnBibliotek(); tegnStats(); tegnRefvalg(); oppdaterFormPanel(); tegn(); }
+    tegnSkystatus();
+    return true;
+  } catch (e) {
+    sky.tilstand = "feil";
+    const raa = String((e && e.message) || e);
+    sky.melding = (e && e.name === "AbortError") ? "tidsavbrudd"
+      : /Failed to fetch|NetworkError|Load failed/i.test(raa) ? "ingen kontakt med serveren"
+      : raa;
+    tegnSkystatus();
+    if (!stille) alert("Synk feilet: " + sky.melding);
+    return false;
+  } finally {
+    synkerNa = false;
+    if (synkIgjen) { synkIgjen = false; synkSnart(); }
+  }
+}
+
+function tegnSkystatus() {
+  const el = $("#skyStatus");
+  if (!el) return;
+  const kanSkrive = !!sky.token;
+  const usendt = kanSkrive ? S.former.filter(f => f.endret !== f.synketTil).length : 0;
+  const lampe = { ok: "gronn", jobber: "gul", feil: "rod", avslaatt: "", ukjent: "" }[sky.tilstand] || "";
+  const punkt = sky.melding && !/[.!?]$/.test(sky.melding) ? "." : "";
+  const tekst = {
+    ok: (kanSkrive ? "Synket. " : "Hentet fra det delte biblioteket. ") + sky.melding + punkt,
+    jobber: kanSkrive ? "Synker nå." : "Henter nå.",
+    feil: (kanSkrive ? "Synk feilet: " : "Fikk ikke hentet: ") + sky.melding + punkt,
+    avslaatt: "Ingen adresse satt.",
+    ukjent: "Ikke hentet ennå."
+  }[sky.tilstand] || "";
+  const egne = !kanSkrive
+    ? " Dine egne former blir liggende i denne nettleseren."
+    : (usendt ? ' <b>' + usendt + (usendt === 1 ? " form venter" : " former venter") + ' på å sendes.</b>' : "");
+  el.innerHTML = '<span class="lampe ' + lampe + '"></span>' + tekst + egne;
+}
+
+/* =======================================================================
+   Generiske utgangsformer
+   ======================================================================= */
+const PROFILER = {
+  rund:  [[18,0],[58,4],[104,20],[139,58],[152,108],[146,158],[129,195],[122,236],[141,276],[168,320],[178,370],[169,414],[139,449],[92,470],[38,479],[0,482]],
+  horn:  [[16,8],[56,-6],[104,-30],[140,-34],[152,4],[150,52],[130,92],[104,116],[96,150],[106,190],[122,232],[142,274],[168,320],[179,372],[169,414],[139,449],[92,470],[38,479],[0,482]],
+  kasse: [[14,0],[58,6],[104,32],[136,80],[146,130],[140,180],[128,212],[120,244],[119,266],[126,296],[142,330],[164,368],[186,408],[198,450],[188,486],[156,508],[108,518],[52,523],[0,524]]
+};
+
+function fraProfiler(venstre, hoyre) {
+  const p = [];
+  for (const [x, y] of hoyre) p.push([x, y]);
+  for (let i = venstre.length - 2; i >= 0; i--) p.push([-venstre[i][0], venstre[i][1]]);
+  return kurve(p, 7);
+}
+function skalerTil(pkt, bMm, hMm) {
+  const bb = boks(pkt);
+  const sx = bMm / bb.b, sy = hMm / bb.h;
+  return pkt.map(([x, y]) => [(x - bb.mx) * sx, (y - bb.my) * sy]);
+}
+
+const GENERISKE = [
+  { navn: "Enkeltcut (generisk)", b: 330, h: 432, lag: () => fraProfiler(PROFILER.horn, PROFILER.rund) },
+  { navn: "Dobbelcut (generisk)", b: 320, h: 415, lag: () => fraProfiler(PROFILER.horn, PROFILER.horn) },
+  { navn: "Kassegitar (generisk)", b: 400, h: 505, lag: () => fraProfiler(PROFILER.kasse, PROFILER.kasse) }
+];
+
+/* =======================================================================
+   Formhjelpere
+   ======================================================================= */
+function valgtForm() { const f = S.former.find(x => x.id === S.valgt); return (f && !f.slettet) ? f : null; }
+function nesteFarge() { return PALETT[iBiblioteket().length % PALETT.length]; }
+
+function transformer(f) {
+  const r = f.rot * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+  const ut = new Array(f.pkt.length);
+  for (let i = 0; i < f.pkt.length; i++) {
+    let x = f.pkt[i][0], y = f.pkt[i][1];
+    if (f.speil) x = -x;
+    ut[i] = [x * c - y * s, x * s + y * c];
+  }
+  return ut;
+}
+function plassering(f, tp) {
+  const bb = boks(tp);
+  let ox = -bb.mx, oy = -bb.my;
+  const j = S.kanvas.juster;
+  if (j === "topp") oy = f.halsTopp ? -bb.y0 : -bb.y1;
+  else if (j === "bunn") oy = f.halsTopp ? -bb.y1 : -bb.y0;
+  return [ox + f.forskyv[0], oy + f.forskyv[1]];
+}
+function verdenspunkter(f) {
+  const tp = transformer(f);
+  const [ox, oy] = plassering(f, tp);
+  return tp.map(([x, y]) => [x + ox, y + oy]);
+}
+// Fra verdenskoordinat tilbake til formens egne punktkoordinater
+function verdenTilForm(f, p, off) {
+  const r = -f.rot * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+  let x = p[0] - off[0], y = p[1] - off[1];
+  let rx = x * c - y * s, ry = x * s + y * c;
+  if (f.speil) rx = -rx;
+  return [rx, ry];
+}
+
+function malFor(f) {
+  const bb = boks(f.pkt);
+  const a = areal(f.pkt);
+  const bm = buemal(f.pkt, f.halsTopp);
+  return {
+    lengde: bb.h, bredde: bb.b, areal: a / 100, omkrets: omkrets(f.pkt) / 10,
+    nedre: bm.nedre, ovre: bm.ovre, midje: bm.midje,
+    vekt: a * f.tykkelse / 1e9 * (TRESLAG.find(t => t[0] === S.tre) || ["", 450])[1]
+  };
+}
+
+function skalerForm(f, bMm, hMm) {
+  const bb = boks(f.pkt);
+  if (bb.b <= 0 || bb.h <= 0) return;
+  const sx = bMm / bb.b, sy = hMm / bb.h;
+  f.pkt = f.pkt.map(([x, y]) => [(x - bb.mx) * sx, (y - bb.my) * sy]);
+  if (f.bilde) {
+    f.bilde.x = (f.bilde.x - bb.mx) * sx; f.bilde.y = (f.bilde.y - bb.my) * sy;
+    f.bilde.b *= sx; f.bilde.h *= sy;
+  }
+}
+function midtstill(f) {
+  const bb = boks(f.pkt);
+  f.pkt = f.pkt.map(([x, y]) => [x - bb.mx, y - bb.my]);
+  if (f.bilde) { f.bilde.x -= bb.mx; f.bilde.y -= bb.my; }
+  f.forskyv = [0, 0];
+}
+
+/* =======================================================================
+   Tegning
+   ======================================================================= */
+const scene = $("#stage");
+const sc = scene.getContext("2d");
+let sceneB = 0, sceneH = 0;
+const bildecache = new Map();
+
+function bildeFor(f) {
+  if (!f.bilde) return null;
+  if (bildecache.has(f.id)) {
+    const c = bildecache.get(f.id);
+    if (c.src === f.bilde.src) return c.img;
+  }
+  const img = new Image();
+  img.onload = () => tegn();
+  img.src = f.bilde.src;
+  bildecache.set(f.id, { src: f.bilde.src, img });
+  return img;
+}
+
+function passStorrelse() {
+  const dpr = window.devicePixelRatio || 1;
+  const r = scene.parentElement.getBoundingClientRect();
+  sceneB = Math.max(1, Math.floor(r.width)); sceneH = Math.max(1, Math.floor(r.height));
+  scene.width = Math.floor(sceneB * dpr); scene.height = Math.floor(sceneH * dpr);
+  sc.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function origo() { return [sceneB / 2 + S.visning.panX, sceneH / 2 + S.visning.panY]; }
+function tilSkjerm(p) { const [ox, oy] = origo(); return [p[0] * S.visning.zoom + ox, p[1] * S.visning.zoom + oy]; }
+function tilVerden(p) { const [ox, oy] = origo(); return [(p[0] - ox) / S.visning.zoom, (p[1] - oy) / S.visning.zoom]; }
+
+let maling = null;      // {a:[x,y], b:[x,y]} i verden
+let boksvalg = null;    // markeringsboks under uttrekking, i verden
+let punktvalg = { id: null, sett: new Set() };
+
+function settPunktvalg(f) { if (punktvalg.id !== f.id) punktvalg = { id: f.id, sett: new Set() }; }
+function merkede(f) { return (f && punktvalg.id === f.id && punktvalg.sett.size) ? punktvalg.sett : null; }
+function tomPunktvalg() { punktvalg = { id: null, sett: new Set() }; }
+
+function tegn() {
+  const K = S.kanvas, z = S.visning.zoom;
+  sc.save();
+  sc.fillStyle = K.bg;
+  sc.fillRect(0, 0, sceneB, sceneH);
+
+  const v0 = tilVerden([0, 0]), v1 = tilVerden([sceneB, sceneH]);
+  const morkBunn = lyshet(K.bg) < 0.5;
+
+  // rutenett
+  if (K.rutenett && K.ruteMm * z > 3.5) {
+    sc.lineWidth = 1;
+    const start = Math.floor(v0[0] / K.ruteMm) * K.ruteMm;
+    const startY = Math.floor(v0[1] / K.ruteMm) * K.ruteMm;
+    for (let x = start; x <= v1[0]; x += K.ruteMm) {
+      const stor = Math.abs(x % (K.ruteMm * 10)) < 1e-6;
+      sc.strokeStyle = rgba(K.rutefarge, stor ? 0.85 : 0.4);
+      const sx = Math.round(tilSkjerm([x, 0])[0]) + 0.5;
+      sc.beginPath(); sc.moveTo(sx, 0); sc.lineTo(sx, sceneH); sc.stroke();
+    }
+    for (let y = startY; y <= v1[1]; y += K.ruteMm) {
+      const stor = Math.abs(y % (K.ruteMm * 10)) < 1e-6;
+      sc.strokeStyle = rgba(K.rutefarge, stor ? 0.85 : 0.4);
+      const sy = Math.round(tilSkjerm([0, y])[1]) + 0.5;
+      sc.beginPath(); sc.moveTo(0, sy); sc.lineTo(sceneB, sy); sc.stroke();
+    }
+  }
+  // senterkors
+  if (K.senter) {
+    sc.strokeStyle = rgba(K.rutefarge, 1); sc.lineWidth = 1; sc.setLineDash([6, 5]);
+    const o = origo();
+    sc.beginPath(); sc.moveTo(Math.round(o[0]) + 0.5, 0); sc.lineTo(Math.round(o[0]) + 0.5, sceneH);
+    sc.moveTo(0, Math.round(o[1]) + 0.5); sc.lineTo(sceneB, Math.round(o[1]) + 0.5); sc.stroke();
+    sc.setLineDash([]);
+  }
+
+  const synlige = synligeFormer();
+
+  // referansebilder først
+  for (const f of synlige) {
+    if (!f.visBilde || !f.bilde) continue;
+    const img = bildeFor(f);
+    if (!img || !img.complete || !img.naturalWidth) continue;
+    const tp = transformer(f);
+    const [ox, oy] = plassering(f, tp);
+    sc.save();
+    const o = origo();
+    sc.translate(o[0], o[1]); sc.scale(z, z); sc.translate(ox, oy);
+    sc.rotate(f.rot * Math.PI / 180);
+    if (f.speil) sc.scale(-1, 1);
+    sc.globalAlpha = 0.55;
+    const bx = f.speil ? -(f.bilde.x + f.bilde.b) : f.bilde.x;
+    sc.drawImage(img, bx, f.bilde.y, f.bilde.b, f.bilde.h);
+    sc.restore();
+  }
+
+  // omriss
+  for (const f of synlige) {
+    const wp = verdenspunkter(f);
+    if (wp.length < 3) continue;
+    sc.beginPath();
+    for (let i = 0; i < wp.length; i++) {
+      const s = tilSkjerm(wp[i]);
+      if (i === 0) sc.moveTo(s[0], s[1]); else sc.lineTo(s[0], s[1]);
+    }
+    sc.closePath();
+    if (f.fyll) { sc.fillStyle = rgba(f.farge, f.opasitet); sc.fill(); }
+    sc.strokeStyle = f.farge;
+    sc.lineWidth = f.strek;
+    sc.setLineDash(f.stiplet ? [8, 5] : []);
+    sc.lineJoin = "round";
+    sc.stroke();
+    sc.setLineDash([]);
+  }
+
+  // punkthåndtak
+  const vf = valgtForm();
+  if (S.verktoy === "punkt" && vf && vf.synlig) {
+    const wp = verdenspunkter(vf);
+    const merk = merkede(vf);
+    for (let i = 0; i < wp.length; i++) {
+      const s = tilSkjerm(wp[i]);
+      const pa = merk && merk.has(i);
+      sc.fillStyle = pa ? "#4a9fd9" : (morkBunn ? "#fff" : "#111");
+      sc.strokeStyle = pa ? (morkBunn ? "#fff" : "#0b2a44") : vf.farge;
+      sc.lineWidth = pa ? 2 : 1.5;
+      sc.beginPath(); sc.arc(s[0], s[1], pa ? 4.8 : 3.4, 0, 6.2832); sc.fill(); sc.stroke();
+    }
+  }
+
+  // markeringsboks
+  if (boksvalg) {
+    const a = tilSkjerm(boksvalg.a), b = tilSkjerm(boksvalg.b);
+    const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]);
+    const br = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]);
+    sc.fillStyle = "rgba(74,159,217,0.14)";
+    sc.fillRect(x, y, br, h);
+    sc.strokeStyle = "#4a9fd9"; sc.lineWidth = 1; sc.setLineDash([5, 4]);
+    sc.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5, Math.round(br), Math.round(h));
+    sc.setLineDash([]);
+  }
+
+  // buemarkører for den valgte formen
+  if (vf && vf.synlig && S.former.length) {
+    const tp = transformer(vf), off = plassering(vf, tp);
+    const bm = buemal(vf.pkt, vf.halsTopp);
+    // markørene tegnes i formens eget rom, så de følger rotasjonen
+    sc.strokeStyle = rgba(vf.farge, 0.5); sc.lineWidth = 1; sc.setLineDash([3, 4]);
+    const bb = boks(vf.pkt);
+    for (const [y, br] of [[bm.yOvre, bm.ovre], [bm.yMidje, bm.midje], [bm.yNedre, bm.nedre]]) {
+      if (!br) continue;
+      const r = vf.rot * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r);
+      const pt = (x, yy) => {
+        let xx = vf.speil ? -x : x;
+        return tilSkjerm([xx * c - yy * sn + off[0], xx * sn + yy * c + off[1]]);
+      };
+      const a = pt(bb.x0 - 8, y), b = pt(bb.x1 + 8, y);
+      sc.beginPath(); sc.moveTo(a[0], a[1]); sc.lineTo(b[0], b[1]); sc.stroke();
+    }
+    sc.setLineDash([]);
+  }
+
+  // målebånd
+  if (maling && maling.b) {
+    const a = tilSkjerm(maling.a), b = tilSkjerm(maling.b);
+    sc.strokeStyle = morkBunn ? "#fff" : "#111"; sc.lineWidth = 1.5;
+    sc.beginPath(); sc.moveTo(a[0], a[1]); sc.lineTo(b[0], b[1]); sc.stroke();
+    for (const p of [a, b]) { sc.beginPath(); sc.arc(p[0], p[1], 3.5, 0, 6.2832); sc.fill(); }
+    const d = Math.hypot(maling.b[0] - maling.a[0], maling.b[1] - maling.a[1]);
+    const tekst = rund(d, 1) + " mm";
+    sc.font = "12px -apple-system, sans-serif";
+    const bredde = sc.measureText(tekst).width + 10;
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    sc.fillStyle = morkBunn ? "#000c" : "#fffc";
+    sc.fillRect(mx - bredde / 2, my - 20, bredde, 17);
+    sc.fillStyle = morkBunn ? "#fff" : "#111";
+    sc.textAlign = "center"; sc.fillText(tekst, mx, my - 7.5); sc.textAlign = "left";
+  }
+
+  // målestokk
+  if (K.malestokk) {
+    const mal = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+    let valgt = mal[mal.length - 1];
+    for (const m of mal) if (m * z >= 90) { valgt = m; break; }
+    const px = valgt * z;
+    const x = sceneB - px - 22, y = sceneH - 26;
+    sc.strokeStyle = morkBunn ? "#ffffffaa" : "#00000099"; sc.lineWidth = 1.5;
+    sc.beginPath();
+    sc.moveTo(x, y - 5); sc.lineTo(x, y + 5); sc.moveTo(x, y); sc.lineTo(x + px, y);
+    sc.moveTo(x + px, y - 5); sc.lineTo(x + px, y + 5);
+    sc.stroke();
+    sc.fillStyle = morkBunn ? "#ffffffcc" : "#000000aa";
+    sc.font = "11px -apple-system, sans-serif"; sc.textAlign = "center";
+    sc.fillText(valgt >= 10 ? (valgt / 10) + " cm" : valgt + " mm", x + px / 2, y - 9);
+    sc.textAlign = "left";
+  }
+  sc.restore();
+  $("#zoomTall").textContent = Math.round(z * 100) + " %";
+}
+
+function tilpassVisning() {
+  const synlige = synligeFormer();
+  if (!synlige.length) { S.visning.zoom = 1.1; S.visning.panX = S.visning.panY = 0; tegn(); return; }
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const f of synlige) {
+    const bb = boks(verdenspunkter(f));
+    x0 = Math.min(x0, bb.x0); y0 = Math.min(y0, bb.y0);
+    x1 = Math.max(x1, bb.x1); y1 = Math.max(y1, bb.y1);
+  }
+  const b = x1 - x0, h = y1 - y0;
+  S.visning.zoom = klem(Math.min((sceneB - 80) / b, (sceneH - 80) / h), 0.05, 30);
+  S.visning.panX = -((x0 + x1) / 2) * S.visning.zoom;
+  S.visning.panY = -((y0 + y1) / 2) * S.visning.zoom;
+  tegn();
+}
+
+/* =======================================================================
+   Angre
+   ======================================================================= */
+const angrestabel = [];
+function pushAngre() {
+  try { angrestabel.push(JSON.stringify(S.former)); } catch (e) { return; }
+  if (angrestabel.length > 25) angrestabel.shift();
+}
+function angre() {
+  if (!angrestabel.length) return;
+  S.former = JSON.parse(angrestabel.pop()).map(normaliserForm);
+  if (!S.former.some(f => f.id === S.valgt)) S.valgt = S.former.length ? S.former[0].id : null;
+  tomPunktvalg();
+  altOppdater();
+}
+
+function hint(t) { $("#sHint").textContent = t; }
+
+/* =======================================================================
+   Sidepanel
+   ======================================================================= */
+function tegnListe() {
+  const l = $("#liste");
+  l.innerHTML = "";
+  const tom = $("#tomliste");
+  tom.style.display = paaLerret().length ? "none" : "block";
+  tom.textContent = iBiblioteket().length
+    ? "Lerretet er tomt. Hent inn en form fra biblioteket under, eller lag en ny."
+    : "Ingen former ennå. Dra et bilde inn i vinduet, lim inn med Cmd+V, eller start fra en generisk form.";
+  for (const f of paaLerret()) {
+    const bb = boks(f.pkt);
+    const d = document.createElement("div");
+    d.className = "fitem" + (f.id === S.valgt ? " valgt" : "") + (f.synlig ? " pa" : "");
+    d.innerHTML =
+      '<span class="prikk" style="background:' + f.farge + '"></span>' +
+      '<span class="navn"></span>' +
+      '<span class="mini">' + Math.round(bb.b) + "x" + Math.round(bb.h) + '</span>' +
+      '<button class="oye" title="Vis eller skjul">' + (f.synlig ? "◉" : "○") + "</button>" +
+      '<button class="av" title="Ta av lerretet, formen blir i biblioteket">\u00d7</button>';
+    $(".navn", d).textContent = f.navn;
+    d.addEventListener("click", () => { S.valgt = f.id; altOppdater(); });
+    $(".oye", d).addEventListener("click", ev => { ev.stopPropagation(); f.synlig = !f.synlig; altOppdater(); });
+    $(".av", d).addEventListener("click", ev => {
+      ev.stopPropagation();
+      f.paaLerret = false;
+      if (S.valgt === f.id) { const q = paaLerret(); S.valgt = q.length ? q[0].id : null; }
+      altOppdater();
+    });
+    l.appendChild(d);
+  }
+}
+
+function oppdaterFormPanel() {
+  const f = valgtForm();
+  $("#formBody").style.opacity = f ? 1 : 0.4;
+  $$("#formBody input, #formBody select, #formBody button").forEach(e => e.disabled = !f);
+  if (!f) { $("#fInfo").textContent = ""; return; }
+  const bb = boks(f.pkt);
+  $("#fNavn").value = f.navn;
+  $("#fFarge").value = f.farge;
+  $("#fStrek").value = f.strek;
+  $("#fStiplet").checked = f.stiplet;
+  $("#fFyll").checked = f.fyll;
+  $("#fOpasitet").value = f.opasitet;
+  $("#fRot").value = f.rot; $("#fRotTall").value = f.rot;
+  $("#fSpeil").checked = f.speil;
+  $("#fHals").value = f.halsTopp ? "topp" : "bunn";
+  $("#fBredde").value = rund(bb.b, 1);
+  $("#fLengde").value = rund(bb.h, 1);
+  $("#fTykk").value = f.tykkelse;
+  $("#fTagger").value = f.tagger.join(", ");
+  $("#fNotat").value = f.notat || "";
+  $("#fBilde").checked = f.visBilde;
+  $("#fBilde").disabled = !f.bilde;
+  const merk = merkede(f);
+  $("#punktrad").hidden = S.verktoy !== "punkt";
+  $("#fSlettMerkede").disabled = !merk;
+  $("#fSlettMerkede").textContent = merk ? "Slett " + merk.size + " markerte" : "Slett markerte";
+  $("#fInfo").textContent = f.pkt.length + " punkter"
+    + (merk ? ", " + merk.size + " markert" : "")
+    + (f.bilde ? ", har referansebilde" : "");
+}
+
+function tegnStats() {
+  const synlige = paaLerret().filter(f => f.synlig);
+  const boks_ = $("#stats");
+  if (!synlige.length) { boks_.innerHTML = '<p class="hint">Ingen synlige former.</p>'; return; }
+  const rader = [
+    ["Lengde", m => rund(m.lengde, 1), "mm"],
+    ["Bredde", m => rund(m.bredde, 1), "mm"],
+    ["Nedre bue", m => rund(m.nedre, 1), "mm"],
+    ["Midje", m => rund(m.midje, 1), "mm"],
+    ["Øvre bue", m => rund(m.ovre, 1), "mm"],
+    ["Areal", m => rund(m.areal, 0), "cm²"],
+    ["Omkrets", m => rund(m.omkrets, 1), "cm"],
+    ["Vekt", m => rund(m.vekt, 2), "kg"]
+  ];
+  const felt = ["lengde", "bredde", "nedre", "midje", "ovre", "areal", "omkrets", "vekt"];
+  const alle = synlige.map(f => ({ f, m: malFor(f) }));
+  const ref = alle.find(a => a.f.id === S.ref);
+  let html = '<div style="overflow-x:auto"><table class="stat"><tr><th></th>';
+  for (const a of alle) {
+    html += '<th title="' + a.f.navn.replace(/"/g, "") + '"><span class="kolfarge" style="background:' + a.f.farge + '"></span>' +
+      (a.f.navn.length > 9 ? a.f.navn.slice(0, 8) + "…" : a.f.navn) + "</th>";
+  }
+  html += "</tr>";
+  rader.forEach((r, ri) => {
+    html += "<tr><td>" + r[0] + " <span class='d'>" + r[2] + "</span></td>";
+    for (const a of alle) {
+      let celle = r[1](a.m);
+      let ekstra = "";
+      if (ref && a !== ref) {
+        const d = a.m[felt[ri]] - ref.m[felt[ri]];
+        const p = ref.m[felt[ri]] ? d / ref.m[felt[ri]] * 100 : 0;
+        if (Math.abs(p) >= 0.5) ekstra = " <span class='d " + (d > 0 ? "pluss" : "minus") + "'>" + (d > 0 ? "+" : "") + rund(p, 0) + "%</span>";
+      }
+      html += "<td>" + celle + ekstra + "</td>";
+    }
+    html += "</tr>";
+  });
+  html += "</table></div>";
+  boks_.innerHTML = html;
+}
+
+function tegnRefvalg() {
+  const s = $("#mRef");
+  s.innerHTML = '<option value="">ingenting</option>';
+  for (const f of paaLerret()) {
+    const o = document.createElement("option");
+    o.value = f.id; o.textContent = f.navn;
+    if (f.id === S.ref) o.selected = true;
+    s.appendChild(o);
+  }
+}
+
+function tegnBibliotek() {
+  const alle = iBiblioteket();
+  const sok = S.sok.trim().toLowerCase();
+
+  const teller = new Map();
+  for (const f of alle) for (const t of f.tagger) teller.set(t, (teller.get(t) || 0) + 1);
+  for (const t of Array.from(S.filtertagger)) if (!teller.has(t)) S.filtertagger.delete(t);
+
+  const ct = $("#bibTagger");
+  ct.innerHTML = "";
+  const sortert = Array.from(teller).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "no"));
+  for (const [t, n] of sortert) {
+    const c = document.createElement("span");
+    c.className = "tagg" + (S.filtertagger.has(t) ? " pa" : "");
+    c.textContent = t;
+    const b = document.createElement("b"); b.textContent = n; c.appendChild(b);
+    c.addEventListener("click", () => {
+      if (S.filtertagger.has(t)) S.filtertagger.delete(t); else S.filtertagger.add(t);
+      tegnBibliotek();
+    });
+    ct.appendChild(c);
+  }
+
+  const filtre = Array.from(S.filtertagger);
+  const treff = alle.filter(f => {
+    if (filtre.length && !filtre.every(t => f.tagger.includes(t))) return false;
+    if (!sok) return true;
+    return (f.navn + " " + f.tagger.join(" ") + " " + (f.notat || "")).toLowerCase().indexOf(sok) >= 0;
+  }).sort((a, b) => a.navn.localeCompare(b.navn, "no"));
+
+  const l = $("#bibListe");
+  l.innerHTML = "";
+  for (const f of treff) {
+    const bb = boks(f.pkt);
+    const d = document.createElement("div");
+    d.className = "bitem" + (f.paaLerret ? " inne" : "");
+    d.innerHTML =
+      '<span class="prikk" style="background:' + f.farge + '"></span>' +
+      '<span class="midt"><span class="navn"></span><span class="under"></span></span>' +
+      '<button class="bytt"></button>';
+    $(".navn", d).textContent = f.navn;
+    $(".under", d).textContent = Math.round(bb.b) + " x " + Math.round(bb.h) + " mm"
+      + (f.tagger.length ? " · " + f.tagger.join(", ") : "")
+      + (f.notat ? " · " + f.notat.replace(/\s+/g, " ").slice(0, 40) : "");
+    const knapp = $(".bytt", d);
+    knapp.textContent = f.paaLerret ? "Av" : "Hent inn";
+    knapp.addEventListener("click", () => {
+      f.paaLerret = !f.paaLerret;
+      if (f.paaLerret) { S.valgt = f.id; }
+      else if (S.valgt === f.id) { const q = paaLerret(); S.valgt = q.length ? q[0].id : null; }
+      altOppdater();
+      if (f.paaLerret) tilpassVisning();
+    });
+    d.addEventListener("click", ev => {
+      if (ev.target === knapp) return;
+      if (f.paaLerret) { S.valgt = f.id; altOppdater(); }
+    });
+    l.appendChild(d);
+  }
+
+  const usendt = S.former.filter(f => f.endret !== f.synketTil).length;
+  $("#bibInfo").textContent = alle.length
+    ? treff.length + " av " + alle.length + " former" + (usendt ? ", " + usendt + " ikke synket" : "")
+    : "Basen er tom. Alt du lager havner her av seg selv.";
+}
+
+$("#bibSok").addEventListener("input", e => { S.sok = e.target.value; tegnBibliotek(); });
+
+function oppdaterKanvasPanel() {
+  const K = S.kanvas;
+  $("#kBg").value = K.bg; $("#kRutenett").checked = K.rutenett;
+  $("#kRutefarge").value = K.rutefarge; $("#kRuteMm").value = K.ruteMm;
+  $("#kSenter").checked = K.senter; $("#kMalestokk").checked = K.malestokk;
+  $("#kJuster").value = K.juster;
+}
+
+function altOppdater() {
+  tegnListe(); tegnBibliotek(); oppdaterFormPanel(); tegnStats(); tegnRefvalg();
+  oppdaterKanvasPanel(); tegnSkystatus(); tegn(); lagre();
+}
+
+/* =======================================================================
+   Panelhendelser
+   ======================================================================= */
+function bindForm(sel, hendelse, fn) {
+  $(sel).addEventListener(hendelse, e => {
+    const f = valgtForm(); if (!f) return;
+    fn(f, e.target);
+    tegn(); lagre();
+  });
+}
+bindForm("#fNavn", "input", (f, t) => { f.navn = t.value; tegnListe(); tegnStats(); tegnRefvalg(); });
+bindForm("#fFarge", "input", (f, t) => { f.farge = t.value; tegnListe(); tegnStats(); });
+bindForm("#fStrek", "input", (f, t) => f.strek = +t.value);
+bindForm("#fStiplet", "change", (f, t) => f.stiplet = t.checked);
+bindForm("#fFyll", "change", (f, t) => f.fyll = t.checked);
+bindForm("#fOpasitet", "input", (f, t) => f.opasitet = +t.value);
+bindForm("#fSpeil", "change", (f, t) => f.speil = t.checked);
+bindForm("#fBilde", "change", (f, t) => f.visBilde = t.checked);
+bindForm("#fHals", "change", (f, t) => { f.halsTopp = t.value === "topp"; tegnStats(); });
+bindForm("#fTagger", "change", (f, t) => {
+  f.tagger = t.value.split(",").map(x => x.trim().toLowerCase()).filter(Boolean).slice(0, 30);
+  t.value = f.tagger.join(", ");
+  tegnBibliotek();
+});
+bindForm("#fNotat", "change", (f, t) => { f.notat = t.value.slice(0, 4000); tegnBibliotek(); });
+bindForm("#fTykk", "change", (f, t) => { f.tykkelse = klem(+t.value || 45, 5, 200); tegnStats(); });
+bindForm("#fRot", "input", (f, t) => { f.rot = +t.value; $("#fRotTall").value = f.rot; });
+bindForm("#fRotTall", "change", (f, t) => { f.rot = klem(+t.value || 0, -180, 180); $("#fRot").value = f.rot; });
+
+function endreMal(hvilken, verdi) {
+  const f = valgtForm(); if (!f || !verdi || verdi <= 0) return;
+  const bb = boks(f.pkt);
+  pushAngre();
+  if ($("#fLas").checked) {
+    const forhold = bb.b / bb.h;
+    if (hvilken === "b") skalerForm(f, verdi, verdi / forhold);
+    else skalerForm(f, verdi * forhold, verdi);
+  } else {
+    skalerForm(f, hvilken === "b" ? verdi : bb.b, hvilken === "h" ? verdi : bb.h);
+  }
+  altOppdater();
+}
+$("#fBredde").addEventListener("change", e => endreMal("b", +e.target.value));
+$("#fLengde").addEventListener("change", e => endreMal("h", +e.target.value));
+
+$("#fPunkter").addEventListener("click", () => settVerktoy("punkt"));
+$("#fMerkAlle").addEventListener("click", merkAlle);
+$("#fSlettMerkede").addEventListener("click", slettMerkede);
+
+function merkAlle() {
+  const f = valgtForm(); if (!f) return;
+  settVerktoy("punkt");
+  settPunktvalg(f);
+  punktvalg.sett = new Set(f.pkt.map((p, i) => i));
+  oppdaterFormPanel(); tegn();
+}
+function slettMerkede() {
+  const f = valgtForm();
+  const merk = merkede(f);
+  if (!merk) { hint("Ingen punkter er markert. Dra en boks rundt dem du vil bort med."); return; }
+  if (f.pkt.length - merk.size < 4) {
+    hint("Et omriss trenger minst fire punkter. Marker færre, eller slett hele formen.");
+    return;
+  }
+  pushAngre();
+  const antall = merk.size;
+  f.pkt = f.pkt.filter((p, i) => !merk.has(i));
+  tomPunktvalg();
+  altOppdater();
+  hint(antall + " punkter slettet. Cmd+Z angrer.");
+}
+$("#fNullstillPos").addEventListener("click", () => { const f = valgtForm(); if (!f) return; pushAngre(); midtstill(f); altOppdater(); });
+$("#fDupliser").addEventListener("click", () => {
+  const f = valgtForm(); if (!f) return;
+  pushAngre();
+  const k = normaliserForm(JSON.parse(JSON.stringify(f)));
+  k.id = nyId(); k.navn = f.navn + " (kopi)"; k.farge = nesteFarge();
+  S.former.push(k); S.valgt = k.id; altOppdater();
+});
+$("#fSlett").addEventListener("click", () => {
+  const f = valgtForm(); if (!f) return;
+  if (!confirm("Slette " + f.navn + " fra biblioteket? Den forsvinner også fra de andre maskinene.")) return;
+  pushAngre();
+  gravlegg(f);
+  if (S.ref === f.id) S.ref = null;
+  const q = paaLerret();
+  S.valgt = q.length ? q[0].id : null;
+  altOppdater();
+});
+
+$("#kBg").addEventListener("input", e => { S.kanvas.bg = e.target.value; tegn(); lagre(); });
+$("#kRutefarge").addEventListener("input", e => { S.kanvas.rutefarge = e.target.value; tegn(); lagre(); });
+$("#kRutenett").addEventListener("change", e => { S.kanvas.rutenett = e.target.checked; tegn(); lagre(); });
+$("#kSenter").addEventListener("change", e => { S.kanvas.senter = e.target.checked; tegn(); lagre(); });
+$("#kMalestokk").addEventListener("change", e => { S.kanvas.malestokk = e.target.checked; tegn(); lagre(); });
+$("#kRuteMm").addEventListener("change", e => { S.kanvas.ruteMm = klem(+e.target.value || 10, 1, 100); tegn(); lagre(); });
+$("#kJuster").addEventListener("change", e => { S.kanvas.juster = e.target.value; tegn(); lagre(); });
+$$("[data-tema]").forEach(b => b.addEventListener("click", () => {
+  Object.assign(S.kanvas, TEMA[b.dataset.tema]);
+  oppdaterKanvasPanel(); tegn(); lagre();
+}));
+
+$("#skyUrl").addEventListener("change", e => { sky.url = e.target.value.trim(); lagreInnstillinger(); tegnSkystatus(); });
+$("#skyToken").addEventListener("change", e => {
+  sky.token = e.target.value.trim();
+  sky.tilstand = sky.token ? "ukjent" : "avslaatt";
+  lagreInnstillinger(); tegnSkystatus();
+  if (sky.token) synk(true);
+});
+$("#skyAuto").addEventListener("change", e => { sky.auto = e.target.checked; lagreInnstillinger(); });
+$("#skyNa").addEventListener("click", () => synk(false));
+$("#skyTest").addEventListener("click", async () => {
+  try {
+    const r = await skyKall("/api/helse");
+    alert("Koblingen virker. Basen har " + r.antall + " former.");
+    sky.tilstand = "ok"; sky.melding = r.antall + " i basen";
+  } catch (e) {
+    alert("Fikk ikke kontakt: " + ((e && e.message) || e));
+    sky.tilstand = "feil"; sky.melding = String((e && e.message) || e);
+  }
+  tegnSkystatus();
+});
+window.addEventListener("online", () => { if (sky.auto && sky.token) synk(true); });
+
+$("#mRef").addEventListener("change", e => { S.ref = e.target.value || null; tegnStats(); lagre(); });
+$("#mTre").addEventListener("change", e => { S.tre = e.target.value; tegnStats(); lagre(); });
+
+/* =======================================================================
+   Verktøylinje
+   ======================================================================= */
+const HINT = {
+  pan: "Dra for å flytte utsnittet. Rull for å zoome.",
+  flytt: "Dra den valgte formen. Piltaster flytter 1 mm, med Shift 10 mm.",
+  punkt: "Dra en boks rundt flere punkter, Backspace sletter dem. Klikk på streken for å legge til.",
+  mal: "Dra fra et punkt til et annet for å måle avstanden."
+};
+function settVerktoy(v) {
+  S.verktoy = v;
+  if (v !== "mal") { maling = null; $("#sMal").textContent = ""; }
+  if (v !== "punkt") boksvalg = null;
+  $("#punktrad").hidden = v !== "punkt";
+  $$("#topbar [data-verktoy]").forEach(b => b.classList.toggle("on", b.dataset.verktoy === v));
+  hint(HINT[v]);
+  scene.style.cursor = v === "pan" ? "grab" : v === "mal" ? "crosshair" : "default";
+  tegn();
+}
+$$("#topbar [data-verktoy]").forEach(b => b.addEventListener("click", () => settVerktoy(b.dataset.verktoy)));
+$("#zoomInn").addEventListener("click", () => { S.visning.zoom = klem(S.visning.zoom * 1.25, 0.05, 30); tegn(); lagre(); });
+$("#zoomUt").addEventListener("click", () => { S.visning.zoom = klem(S.visning.zoom / 1.25, 0.05, 30); tegn(); lagre(); });
+$("#tilpass").addEventListener("click", () => { tilpassVisning(); lagre(); });
+$("#kunValgt").addEventListener("click", () => {
+  S.kunValgt = !S.kunValgt;
+  $("#kunValgt").classList.toggle("on", S.kunValgt);
+  tegn();
+});
+
+/* =======================================================================
+   Musehåndtering på scenen
+   ======================================================================= */
+let drag = null, mellomrom = false;
+
+scene.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = scene.getBoundingClientRect();
+  const mus = [e.clientX - r.left, e.clientY - r.top];
+  const v = tilVerden(mus);
+  const faktor = Math.exp(-e.deltaY * 0.0015);
+  S.visning.zoom = klem(S.visning.zoom * faktor, 0.05, 30);
+  S.visning.panX = mus[0] - sceneB / 2 - v[0] * S.visning.zoom;
+  S.visning.panY = mus[1] - sceneH / 2 - v[1] * S.visning.zoom;
+  tegn();
+}, { passive: false });
+
+function musPos(e) {
+  const r = scene.getBoundingClientRect();
+  return [e.clientX - r.left, e.clientY - r.top];
+}
+
+// Punktene markeringsboksen dekker akkurat nå
+function oppdaterBoksvalg() {
+  const f = valgtForm();
+  if (!f || !boksvalg) return;
+  const x0 = Math.min(boksvalg.a[0], boksvalg.b[0]), x1 = Math.max(boksvalg.a[0], boksvalg.b[0]);
+  const y0 = Math.min(boksvalg.a[1], boksvalg.b[1]), y1 = Math.max(boksvalg.a[1], boksvalg.b[1]);
+  const wp = verdenspunkter(f);
+  const treff = new Set(boksvalg.base);
+  for (let i = 0; i < wp.length; i++) {
+    const p = wp[i];
+    if (p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1) treff.add(i);
+  }
+  settPunktvalg(f);
+  punktvalg.sett = treff;
+}
+
+// Nærmeste punkt eller kant på den valgte formen, i skjermkoordinater
+function treffPunkt(f, mus) {
+  const wp = verdenspunkter(f);
+  let beste = -1, bestAvst = 9;
+  for (let i = 0; i < wp.length; i++) {
+    const s = tilSkjerm(wp[i]);
+    const d = Math.hypot(s[0] - mus[0], s[1] - mus[1]);
+    if (d < bestAvst) { bestAvst = d; beste = i; }
+  }
+  if (beste >= 0) return { type: "punkt", i: beste };
+  let kant = -1, kantAvst = 7;
+  for (let i = 0; i < wp.length; i++) {
+    const a = tilSkjerm(wp[i]), b = tilSkjerm(wp[(i + 1) % wp.length]);
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len2 = dx * dx + dy * dy || 1e-9;
+    let t = ((mus[0] - a[0]) * dx + (mus[1] - a[1]) * dy) / len2;
+    t = klem(t, 0, 1);
+    const d = Math.hypot(a[0] + t * dx - mus[0], a[1] + t * dy - mus[1]);
+    if (d < kantAvst) { kantAvst = d; kant = i; }
+  }
+  if (kant >= 0) return { type: "kant", i: kant };
+  return null;
+}
+
+scene.addEventListener("pointerdown", e => {
+  const mus = musPos(e);
+  scene.setPointerCapture(e.pointerId);
+  const f = valgtForm();
+
+  if (e.button === 1 || mellomrom || S.verktoy === "pan") {
+    drag = { type: "pan", x: e.clientX, y: e.clientY, px: S.visning.panX, py: S.visning.panY };
+    scene.style.cursor = "grabbing";
+    return;
+  }
+  if (S.verktoy === "mal") {
+    maling = { a: tilVerden(mus), b: null };
+    drag = { type: "mal" };
+    return;
+  }
+  if (S.verktoy === "flytt" && f) {
+    if (S.kanvas.juster !== "fri") {
+      // Frys formene der de står, så flyttingen ikke overstyres av justeringen
+      for (const g of S.former) {
+        const tp = transformer(g), off = plassering(g, tp);
+        const bb = boks(tp);
+        g.forskyv = [off[0] + bb.mx, off[1] + bb.my];
+      }
+      S.kanvas.juster = "fri";
+      oppdaterKanvasPanel();
+      hint("Justeringen er satt til fri plassering, ellers ville formen hoppet tilbake.");
+    }
+    pushAngre();
+    drag = { type: "flytt", start: tilVerden(mus), f0: f.forskyv.slice() };
+    return;
+  }
+  if (S.verktoy === "punkt" && f) {
+    const t = treffPunkt(f, mus);
+    const tp = transformer(f), off = plassering(f, tp);
+    const legg = e.shiftKey || e.metaKey || e.ctrlKey;
+
+    if (!t) {
+      // tomrom: dra opp en markeringsboks
+      settPunktvalg(f);
+      const v = tilVerden(mus);
+      boksvalg = { a: v, b: v, legg, base: new Set(legg ? punktvalg.sett : []) };
+      drag = { type: "boks" };
+      oppdaterBoksvalg();
+      oppdaterFormPanel(); tegn();
+      return;
+    }
+
+    if (t.type === "punkt") {
+      if (e.altKey) {
+        if (f.pkt.length > 4) { pushAngre(); f.pkt.splice(t.i, 1); tomPunktvalg(); altOppdater(); }
+        return;
+      }
+      settPunktvalg(f);
+      if (legg) {
+        if (punktvalg.sett.has(t.i)) punktvalg.sett.delete(t.i); else punktvalg.sett.add(t.i);
+        oppdaterFormPanel(); tegn();
+        return;
+      }
+      // Et punkt utenfor markeringen erstatter den. Et innenfor drar hele med seg.
+      if (!punktvalg.sett.has(t.i)) { punktvalg.sett.clear(); punktvalg.sett.add(t.i); }
+      pushAngre();
+      const orig = new Map();
+      for (const i of punktvalg.sett) if (f.pkt[i]) orig.set(i, f.pkt[i].slice());
+      drag = { type: "punkt", off, orig, startForm: verdenTilForm(f, tilVerden(mus), off) };
+      oppdaterFormPanel(); tegn();
+      return;
+    }
+
+    // kant: sett inn et nytt punkt og dra videre på det
+    pushAngre();
+    const ny = verdenTilForm(f, tilVerden(mus), off);
+    f.pkt.splice(t.i + 1, 0, ny);
+    settPunktvalg(f);
+    punktvalg.sett = new Set(Array.from(punktvalg.sett).map(i => i > t.i ? i + 1 : i));
+    drag = { type: "punkt", off, orig: new Map([[t.i + 1, ny.slice()]]), startForm: ny.slice() };
+    altOppdater();
+    return;
+  }
+}, false);
+
+scene.addEventListener("pointermove", e => {
+  const mus = musPos(e);
+  const v = tilVerden(mus);
+  $("#sPos").textContent = rund(v[0], 1) + ", " + rund(v[1], 1) + " mm";
+  if (!drag) return;
+  if (drag.type === "pan") {
+    S.visning.panX = drag.px + (e.clientX - drag.x);
+    S.visning.panY = drag.py + (e.clientY - drag.y);
+    tegn();
+  } else if (drag.type === "mal") {
+    maling.b = v;
+    const d = Math.hypot(maling.b[0] - maling.a[0], maling.b[1] - maling.a[1]);
+    $("#sMal").textContent = "avstand " + rund(d, 1) + " mm (" + rund(d / 10, 2) + " cm)";
+    tegn();
+  } else if (drag.type === "flytt") {
+    const f = valgtForm(); if (!f) return;
+    f.forskyv = [drag.f0[0] + v[0] - drag.start[0], drag.f0[1] + v[1] - drag.start[1]];
+    tegn();
+  } else if (drag.type === "punkt") {
+    const f = valgtForm(); if (!f) return;
+    const na = verdenTilForm(f, v, drag.off);
+    const dx = na[0] - drag.startForm[0], dy = na[1] - drag.startForm[1];
+    for (const [i, p] of drag.orig) if (f.pkt[i]) f.pkt[i] = [p[0] + dx, p[1] + dy];
+    tegn();
+  } else if (drag.type === "boks" && boksvalg) {
+    boksvalg.b = v;
+    oppdaterBoksvalg();
+    tegn();
+  }
+});
+
+scene.addEventListener("pointerup", e => {
+  if (drag && drag.type === "boks") {
+    const merk = merkede(valgtForm());
+    boksvalg = null;
+    hint(merk ? merk.size + " punkter markert. Backspace sletter dem." : HINT.punkt);
+    altOppdater();
+  } else if (drag && (drag.type === "punkt" || drag.type === "flytt")) altOppdater();
+  drag = null;
+  scene.style.cursor = S.verktoy === "pan" ? "grab" : S.verktoy === "mal" ? "crosshair" : "default";
+});
+
+window.addEventListener("keydown", e => {
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if (!$("#import").hidden) return;   // importen har sine egne taster
+  if (e.code === "Space") { mellomrom = true; scene.style.cursor = "grab"; e.preventDefault(); }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); angre(); return; }
+  if (S.verktoy === "punkt") {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") { e.preventDefault(); merkAlle(); return; }
+    if (e.key === "Backspace" || e.key === "Delete") { e.preventDefault(); slettMerkede(); return; }
+    if (e.key === "Escape" && merkede(valgtForm())) {
+      tomPunktvalg(); oppdaterFormPanel(); tegn(); hint(HINT.punkt); return;
+    }
+  }
+  const f = valgtForm();
+  if (f && e.key.startsWith("Arrow")) {
+    const steg = e.shiftKey ? 10 : 1;
+    if (S.kanvas.juster !== "fri") { S.kanvas.juster = "fri"; oppdaterKanvasPanel(); }
+    if (e.key === "ArrowLeft") f.forskyv[0] -= steg;
+    if (e.key === "ArrowRight") f.forskyv[0] += steg;
+    if (e.key === "ArrowUp") f.forskyv[1] -= steg;
+    if (e.key === "ArrowDown") f.forskyv[1] += steg;
+    e.preventDefault(); tegn(); lagre();
+  }
+  if (e.key === "1") settVerktoy("pan");
+  if (e.key === "2") settVerktoy("flytt");
+  if (e.key === "3") settVerktoy("punkt");
+  if (e.key === "4") settVerktoy("mal");
+});
+window.addEventListener("keyup", e => {
+  if (e.code === "Space") { mellomrom = false; scene.style.cursor = S.verktoy === "pan" ? "grab" : "default"; }
+});
+
+/* =======================================================================
+   Eksport
+   ======================================================================= */
+function lastNed(data, navn, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: type || "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = navn;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+$("#eSvg").addEventListener("click", () => {
+  const synlige = paaLerret().filter(f => f.synlig);
+  if (!synlige.length) return alert("Ingen synlige former å eksportere.");
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const baner = [];
+  for (const f of synlige) {
+    const wp = verdenspunkter(f);
+    const bb = boks(wp);
+    x0 = Math.min(x0, bb.x0); y0 = Math.min(y0, bb.y0);
+    x1 = Math.max(x1, bb.x1); y1 = Math.max(y1, bb.y1);
+    baner.push({ f, wp });
+  }
+  const m = 10;
+  const B = x1 - x0 + m * 2, H = y1 - y0 + m * 2;
+  let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  svg += '<svg xmlns="http://www.w3.org/2000/svg" width="' + rund(B, 2) + 'mm" height="' + rund(H, 2) + 'mm" viewBox="0 0 ' + rund(B, 2) + " " + rund(H, 2) + '">\n';
+  svg += "<title>Gitarformer</title>\n";
+  for (const { f, wp } of baner) {
+    const d = wp.map((p, i) => (i ? "L" : "M") + rund(p[0] - x0 + m, 2) + " " + rund(p[1] - y0 + m, 2)).join(" ") + " Z";
+    svg += '<path d="' + d + '" fill="' + (f.fyll ? f.farge : "none") + '" fill-opacity="' + (f.fyll ? f.opasitet : 0) +
+      '" stroke="' + f.farge + '" stroke-width="0.4" stroke-linejoin="round"><title>' +
+      f.navn.replace(/[<&]/g, "") + "</title></path>\n";
+  }
+  svg += "</svg>\n";
+  lastNed(svg, "gitarformer.svg", "image/svg+xml");
+});
+
+$("#ePng").addEventListener("click", () => {
+  const dpr = 2;
+  scene.width = sceneB * dpr; scene.height = sceneH * dpr;
+  sc.setTransform(dpr, 0, 0, dpr, 0, 0);
+  tegn();
+  scene.toBlob(b => { lastNed(b, "gitarformer.png"); passStorrelse(); tegn(); });
+});
+
+$("#eJson").addEventListener("click", () => {
+  lastNed(JSON.stringify({ versjon: 2, former: iBiblioteket(), kanvas: S.kanvas, tre: S.tre }, null, 1),
+    "gitarformer.json", "application/json");
+});
+$("#iJson").addEventListener("click", () => $("#jsonvelger").click());
+$("#jsonvelger").addEventListener("change", e => {
+  const fil = e.target.files[0]; if (!fil) return;
+  const les = new FileReader();
+  les.onload = () => {
+    try {
+      const d = JSON.parse(les.result);
+      if (!d.former) throw 0;
+      pushAngre();
+      // Fletter inn, erstatter ikke. En prosjektfil skal ikke tømme biblioteket.
+      let nye = 0;
+      for (const rå of d.former) {
+        const f = normaliserForm(rå);
+        f.paaLerret = true;
+        const gammel = S.former.find(x => x.id === f.id);
+        if (gammel) Object.assign(gammel, f); else { S.former.push(f); nye++; }
+      }
+      if (d.kanvas) Object.assign(S.kanvas, d.kanvas);
+      if (d.tre) S.tre = d.tre;
+      const p0 = paaLerret();
+      S.valgt = p0.length ? p0[0].id : null;
+      bildecache.clear();
+      altOppdater(); tilpassVisning();
+      hint(d.former.length + " former lest inn, " + nye + " av dem var nye.");
+    } catch (err) { alert("Fant ingen gyldig prosjektfil der."); }
+  };
+  les.readAsText(fil);
+  e.target.value = "";
+});
+$("#tomAlt").addEventListener("click", () => {
+  if (!paaLerret().length) return;
+  pushAngre();
+  for (const f of S.former) f.paaLerret = false;
+  S.valgt = null; S.ref = null;
+  altOppdater();
+  hint("Lerretet er tomt. Formene ligger i biblioteket.");
+});
+
+/* =======================================================================
+   Import: bilde til omriss
+   ======================================================================= */
+const iScene = $("#icanvas");
+const ic = iScene.getContext("2d");
+const MAKS = 900;
+
+const I = {
+  steg: 1, bilde: null, base: null, quad: null, rot: 0,
+  rettet: null, data: null, metode: "tryllestav",
+  fro: [], kontur: null, tegnPkt: [], view: { s: 1, ox: 0, oy: 0 }, drag: null
+};
+
+function apneImport() {
+  I.steg = 1; I.bilde = null; I.base = null; I.quad = null; I.rot = 0;
+  I.rettet = null; I.data = null; I.fro = []; I.kontur = null; I.tegnPkt = [];
+  $("#iNavn").value = "Gitar " + (S.former.length + 1);
+  $("#iFarge").value = nesteFarge();
+  $("#iRot").value = 0; $("#iRotTall").value = 0;
+  $("#import").hidden = false;
+  visSteg(1);
+}
+function lukkImport() { $("#import").hidden = true; }
+
+function visSteg(n) {
+  I.steg = n;
+  $$(".istep").forEach(d => d.classList.toggle("na", +d.dataset.s === n));
+  $$("#steps li").forEach(li => {
+    li.classList.toggle("na", +li.dataset.s === n);
+    li.classList.toggle("ferdig", +li.dataset.s < n);
+  });
+  $("#iTilbake").disabled = n === 1;
+  $("#iNeste").textContent = n === 4 ? "Legg til form" : "Neste";
+  $("#iNeste").disabled = (n === 1 && !I.bilde) || (n === 3 && !I.kontur);
+  if (n === 3) beregnKontur();
+  if (n === 4) forberedMal();
+  iPass(); iTegn();
+}
+
+function iPass() {
+  const dpr = window.devicePixelRatio || 1;
+  const r = $("#iwrap").getBoundingClientRect();
+  iScene.width = Math.floor(r.width * dpr); iScene.height = Math.floor(r.height * dpr);
+  iScene.style.width = r.width + "px"; iScene.style.height = r.height + "px";
+  ic.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const kilde = I.steg >= 3 ? I.rettet : I.base;
+  if (!kilde) return;
+  const s = Math.min((r.width - 60) / kilde.width, (r.height - 60) / kilde.height);
+  I.view = { s, ox: (r.width - kilde.width * s) / 2, oy: (r.height - kilde.height * s) / 2, b: r.width, h: r.height };
+}
+const iTilSkjerm = p => [p[0] * I.view.s + I.view.ox, p[1] * I.view.s + I.view.oy];
+const iTilBilde = p => [(p[0] - I.view.ox) / I.view.s, (p[1] - I.view.oy) / I.view.s];
+
+function iTegn() {
+  const V = I.view;
+  ic.save();
+  ic.fillStyle = "#0f1114";
+  ic.fillRect(0, 0, V.b || iScene.width, V.h || iScene.height);
+  const kilde = I.steg >= 3 ? I.rettet : I.base;
+  if (!kilde) { ic.restore(); $("#iKvitt").textContent = ""; return; }
+
+  const visBilde = I.steg < 3 || $("#iVisBilde").checked;
+  ic.globalAlpha = visBilde ? 1 : 0.12;
+  ic.drawImage(kilde, V.ox, V.oy, kilde.width * V.s, kilde.height * V.s);
+  ic.globalAlpha = 1;
+
+  if (I.steg === 2 && I.quad) {
+    // hjelperuter
+    if ($("#iRuter").checked) {
+      const h = homografi([[0, 0], [1, 0], [1, 1], [0, 1]], I.quad);
+      const pt = (u, v) => {
+        const n = h[6] * u + h[7] * v + 1;
+        return iTilSkjerm([(h[0] * u + h[1] * v + h[2]) / n, (h[3] * u + h[4] * v + h[5]) / n]);
+      };
+      ic.strokeStyle = "#ffffff40"; ic.lineWidth = 1;
+      for (let k = 1; k < 4; k++) {
+        const t = k / 4;
+        ic.beginPath();
+        for (let s = 0; s <= 20; s++) { const p = pt(t, s / 20); s ? ic.lineTo(p[0], p[1]) : ic.moveTo(p[0], p[1]); }
+        ic.stroke();
+        ic.beginPath();
+        for (let s = 0; s <= 20; s++) { const p = pt(s / 20, t); s ? ic.lineTo(p[0], p[1]) : ic.moveTo(p[0], p[1]); }
+        ic.stroke();
+      }
+    }
+    ic.strokeStyle = "#bd6a39"; ic.lineWidth = 2;
+    ic.beginPath();
+    I.quad.forEach((p, i) => { const s = iTilSkjerm(p); i ? ic.lineTo(s[0], s[1]) : ic.moveTo(s[0], s[1]); });
+    ic.closePath(); ic.stroke();
+    I.quad.forEach((p, i) => {
+      const s = iTilSkjerm(p);
+      ic.fillStyle = "#fff"; ic.strokeStyle = "#bd6a39"; ic.lineWidth = 2.5;
+      ic.beginPath(); ic.arc(s[0], s[1], 7, 0, 6.2832); ic.fill(); ic.stroke();
+    });
+    $("#iKvitt").textContent = "Dra hjørnene. Firkanten blir rettet ut til et rektangel.";
+  }
+
+  if (I.steg >= 3) {
+    if (I.metode === "tryllestav") {
+      for (const f of I.fro) {
+        const s = iTilSkjerm(f);
+        ic.strokeStyle = "#4a9fd9"; ic.lineWidth = 2;
+        ic.beginPath(); ic.arc(s[0], s[1], 6, 0, 6.2832); ic.stroke();
+      }
+    }
+    if (I.metode === "tegn") {
+      for (const p of I.tegnPkt) {
+        const s = iTilSkjerm(p);
+        ic.fillStyle = "#4a9fd9";
+        ic.beginPath(); ic.arc(s[0], s[1], 4, 0, 6.2832); ic.fill();
+      }
+    }
+    if (I.kontur && I.kontur.length > 2) {
+      ic.beginPath();
+      I.kontur.forEach((p, i) => { const s = iTilSkjerm(p); i ? ic.lineTo(s[0], s[1]) : ic.moveTo(s[0], s[1]); });
+      ic.closePath();
+      ic.fillStyle = rgba($("#iFarge").value, 0.18); ic.fill();
+      ic.strokeStyle = $("#iFarge").value; ic.lineWidth = 2; ic.stroke();
+    }
+    $("#iKvitt").textContent = I.metode === "tryllestav" ? "Klikk på bakgrunnen. Alt-klikk fjerner et klikk."
+      : I.metode === "tegn" ? "Klikk rundt kanten. Cmd+Z angrer siste punkt." : "";
+  }
+  ic.restore();
+}
+
+/* --- steg 1: last inn bilde --- */
+function lastBilde(kilde) {
+  const img = new Image();
+  img.onload = () => {
+    const f = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * f); c.height = Math.round(img.height * f);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    I.bilde = img; I.base = c;
+    nullstillQuad();
+    visSteg(2);
+  };
+  img.onerror = () => alert("Fikk ikke lest bildet.");
+  img.src = kilde;
+}
+function filTilBilde(fil) {
+  if (!fil || !/^image\//.test(fil.type)) return;
+  const les = new FileReader();
+  les.onload = () => { if ($("#import").hidden) apneImport(); lastBilde(les.result); };
+  les.readAsDataURL(fil);
+}
+$("#dropsone").addEventListener("click", () => $("#filvelger").click());
+$("#filvelger").addEventListener("change", e => { filTilBilde(e.target.files[0]); e.target.value = ""; });
+
+/* --- steg 2: firkant og rotasjon --- */
+function nullstillQuad() {
+  const w = I.base.width, h = I.base.height, m = 0.08;
+  I.quad = [[w * m, h * m], [w * (1 - m), h * m], [w * (1 - m), h * (1 - m)], [w * m, h * (1 - m)]];
+  I.rot = 0; $("#iRot").value = 0; $("#iRotTall").value = 0;
+}
+function roterQuad(grader) {
+  const d = (grader - I.rot) * Math.PI / 180;
+  I.rot = grader;
+  const cx = I.quad.reduce((a, p) => a + p[0], 0) / 4, cy = I.quad.reduce((a, p) => a + p[1], 0) / 4;
+  const c = Math.cos(d), s = Math.sin(d);
+  I.quad = I.quad.map(([x, y]) => [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c]);
+  iTegn();
+}
+$("#iRot").addEventListener("input", e => { roterQuad(+e.target.value); $("#iRotTall").value = e.target.value; });
+$("#iRotTall").addEventListener("change", e => { const v = klem(+e.target.value || 0, -45, 45); $("#iRot").value = v; roterQuad(v); });
+$("#iNullstill").addEventListener("click", () => { nullstillQuad(); iTegn(); });
+$("#iHele").addEventListener("click", () => {
+  const w = I.base.width, h = I.base.height;
+  I.quad = [[0, 0], [w, 0], [w, h], [0, h]];
+  I.rot = 0; $("#iRot").value = 0; $("#iRotTall").value = 0;
+  utforRetting(); visSteg(3);
+});
+function utforRetting() {
+  I.rettet = rettOpp(I.base, I.quad, MAKS);
+  if ($("#iSpeil").checked) {
+    const c = document.createElement("canvas");
+    c.width = I.rettet.width; c.height = I.rettet.height;
+    const cc = c.getContext("2d");
+    cc.translate(c.width, 0); cc.scale(-1, 1); cc.drawImage(I.rettet, 0, 0);
+    I.rettet = c;
+  }
+  I.data = I.rettet.getContext("2d").getImageData(0, 0, I.rettet.width, I.rettet.height);
+  I.fro = []; I.tegnPkt = []; I.kontur = null;
+}
+
+/* --- steg 3: omriss --- */
+$$("[data-metode]").forEach(b => b.addEventListener("click", () => {
+  I.metode = b.dataset.metode;
+  $$("[data-metode]").forEach(x => x.classList.toggle("on", x === b));
+  $("#mTryllestav").hidden = I.metode !== "tryllestav";
+  $("#mTerskel").hidden = I.metode !== "terskel";
+  $("#mTegn").hidden = I.metode !== "tegn";
+  beregnKontur();
+}));
+let konturTimer = null;
+function beregnSnart() { clearTimeout(konturTimer); konturTimer = setTimeout(beregnKontur, 70); }
+["#iTol", "#iTerskel", "#iRens", "#iForenkl", "#iGlatt"].forEach(s => $(s).addEventListener("input", beregnSnart));
+$("#iSnu").addEventListener("change", beregnKontur);
+$("#iVisBilde").addEventListener("change", iTegn);
+$("#iTegnTom").addEventListener("click", () => { I.tegnPkt = []; beregnKontur(); });
+
+function beregnKontur() {
+  if (I.steg !== 3 && I.steg !== 4) return;
+  if (I.metode === "tegn") {
+    I.kontur = I.tegnPkt.length >= 3 ? I.tegnPkt.slice() : null;
+    ferdigKontur(); return;
+  }
+  if (!I.data) return;
+  const w = I.data.width, h = I.data.height;
+  let m;
+  if (I.metode === "tryllestav") {
+    const fro = I.fro.length ? I.fro : [[1, 1], [w - 2, 1], [1, h - 2], [w - 2, h - 2]];
+    m = tryllestav(I.data, fro, +$("#iTol").value);
+  } else {
+    m = terskelmaske(I.data, +$("#iTerskel").value, $("#iSnu").checked);
+  }
+  m = rens(m, w, h, +$("#iRens").value);
+  m = storsteFlate(m, w, h);
+  let k = m ? sporKontur(m, w, h) : null;
+  if (k) {
+    const eps = +$("#iForenkl").value;
+    k = forenkl(k, eps);
+    const g = +$("#iGlatt").value;
+    if (g) { k = glatt(k, g); k = forenkl(k, eps * 0.4); }
+  }
+  I.kontur = k;
+  ferdigKontur();
+}
+function ferdigKontur() {
+  const ok = !!(I.kontur && I.kontur.length > 2);
+  $("#iNeste").disabled = I.steg === 3 && !ok;
+  $("#iKontinfo").textContent = ok
+    ? I.kontur.length + " punkter i omrisset."
+    : "Fant ikke noe omriss ennå. Juster toleransen, eller klikk et annet sted i bakgrunnen.";
+  iTegn();
+}
+
+/* --- steg 4: mål --- */
+function forberedMal() {
+  const bb = boks(I.kontur);
+  const b = +$("#iBredde").value || 330;
+  $("#iLengde").value = rund(b * bb.h / bb.b, 0);
+}
+$("#iBredde").addEventListener("input", () => {
+  if (!$("#iLas").checked || !I.kontur) return;
+  const bb = boks(I.kontur);
+  $("#iLengde").value = rund((+$("#iBredde").value || 0) * bb.h / bb.b, 0);
+});
+$("#iLengde").addEventListener("input", () => {
+  if (!$("#iLas").checked || !I.kontur) return;
+  const bb = boks(I.kontur);
+  $("#iBredde").value = rund((+$("#iLengde").value || 0) * bb.b / bb.h, 0);
+});
+$("#iFarge").addEventListener("input", iTegn);
+
+function leggTilForm() {
+  const bb = boks(I.kontur);
+  const bMm = klem(+$("#iBredde").value || 330, 5, 3000);
+  const hMm = klem(+$("#iLengde").value || 430, 5, 3000);
+  const sx = bMm / bb.b, sy = hMm / bb.h;
+  const pkt = I.kontur.map(([x, y]) => [(x - bb.mx) * sx, (y - bb.my) * sy]);
+
+  let bilde = null;
+  if (I.rettet) {
+    const liten = document.createElement("canvas");
+    const f = Math.min(1, 620 / Math.max(I.rettet.width, I.rettet.height));
+    liten.width = Math.round(I.rettet.width * f); liten.height = Math.round(I.rettet.height * f);
+    liten.getContext("2d").drawImage(I.rettet, 0, 0, liten.width, liten.height);
+    bilde = {
+      src: liten.toDataURL("image/jpeg", 0.72),
+      x: (0 - bb.mx) * sx, y: (0 - bb.my) * sy,
+      b: I.rettet.width * sx, h: I.rettet.height * sy
+    };
+  }
+  pushAngre();
+  const f = normaliserForm({
+    navn: $("#iNavn").value.trim() || "Gitar",
+    farge: $("#iFarge").value,
+    pkt, bilde, visBilde: false,
+    tykkelse: klem(+$("#iTykk").value || 45, 5, 200),
+    halsTopp: $("#iHals").value === "topp"
+  });
+  S.former.push(f);
+  S.valgt = f.id;
+  lukkImport();
+  altOppdater();
+  tilpassVisning();
+  hint("Formen er lagt til. Bytt farge og sammenlign i panelet til venstre.");
+}
+
+/* --- navigasjon i importen --- */
+$("#iNeste").addEventListener("click", () => {
+  if (I.steg === 1) { if (I.bilde) visSteg(2); return; }
+  if (I.steg === 2) { utforRetting(); visSteg(3); return; }
+  if (I.steg === 3) { if (I.kontur) visSteg(4); return; }
+  if (I.steg === 4) leggTilForm();
+});
+$("#iTilbake").addEventListener("click", () => { if (I.steg > 1) visSteg(I.steg - 1); });
+$("#iAvbryt").addEventListener("click", lukkImport);
+
+/* --- mus i importen --- */
+iScene.addEventListener("pointerdown", e => {
+  const r = iScene.getBoundingClientRect();
+  const mus = [e.clientX - r.left, e.clientY - r.top];
+  const bp = iTilBilde(mus);
+  if (I.steg === 2 && I.quad) {
+    let beste = -1, avst = 16;
+    I.quad.forEach((p, i) => {
+      const s = iTilSkjerm(p);
+      const d = Math.hypot(s[0] - mus[0], s[1] - mus[1]);
+      if (d < avst) { avst = d; beste = i; }
+    });
+    if (beste >= 0) { I.drag = beste; iScene.setPointerCapture(e.pointerId); }
+    return;
+  }
+  if (I.steg === 3) {
+    if (I.metode === "tryllestav") {
+      if (e.altKey) {
+        let beste = -1, avst = 14;
+        I.fro.forEach((p, i) => { const s = iTilSkjerm(p); const d = Math.hypot(s[0] - mus[0], s[1] - mus[1]); if (d < avst) { avst = d; beste = i; } });
+        if (beste >= 0) I.fro.splice(beste, 1);
+      } else if (bp[0] >= 0 && bp[1] >= 0 && bp[0] < I.data.width && bp[1] < I.data.height) {
+        I.fro.push([Math.round(bp[0]), Math.round(bp[1])]);
+      }
+      beregnKontur();
+    } else if (I.metode === "tegn") {
+      I.tegnPkt.push([bp[0], bp[1]]);
+      beregnKontur();
+    }
+  }
+});
+iScene.addEventListener("pointermove", e => {
+  if (I.drag === null || I.steg !== 2) return;
+  const r = iScene.getBoundingClientRect();
+  const bp = iTilBilde([e.clientX - r.left, e.clientY - r.top]);
+  I.quad[I.drag] = [klem(bp[0], -200, I.base.width + 200), klem(bp[1], -200, I.base.height + 200)];
+  iTegn();
+});
+iScene.addEventListener("pointerup", () => { I.drag = null; });
+
+window.addEventListener("keydown", e => {
+  if ($("#import").hidden) return;
+  if (e.key === "Escape") lukkImport();
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && I.metode === "tegn" && I.steg === 3) {
+    e.preventDefault(); I.tegnPkt.pop(); beregnKontur();
+  }
+});
+
+/* =======================================================================
+   Dra inn og lim inn
+   ======================================================================= */
+let droppTeller = 0;
+window.addEventListener("dragover", e => { e.preventDefault(); });
+window.addEventListener("dragenter", e => { e.preventDefault(); droppTeller++; $("#dropp").classList.add("vis"); });
+window.addEventListener("dragleave", () => { if (--droppTeller <= 0) $("#dropp").classList.remove("vis"); });
+window.addEventListener("drop", e => {
+  e.preventDefault(); droppTeller = 0; $("#dropp").classList.remove("vis");
+  const fil = e.dataTransfer.files[0];
+  if (fil && /^image\//.test(fil.type)) filTilBilde(fil);
+  else if (fil && /json$/i.test(fil.name)) {
+    const les = new FileReader();
+    les.onload = () => {
+      try {
+        const d = JSON.parse(les.result);
+        if (!d.former) throw 0;
+        pushAngre();
+        S.former = d.former.map(normaliserForm);
+        if (d.kanvas) Object.assign(S.kanvas, d.kanvas);
+        S.valgt = S.former.length ? S.former[0].id : null;
+        bildecache.clear(); altOppdater(); tilpassVisning();
+      } catch (err) { alert("Fant ingen gyldig prosjektfil der."); }
+    };
+    les.readAsText(fil);
+  }
+});
+window.addEventListener("paste", e => {
+  const emner = e.clipboardData && e.clipboardData.items;
+  if (!emner) return;
+  for (const em of emner) {
+    if (em.type && em.type.indexOf("image") === 0) { filTilBilde(em.getAsFile()); e.preventDefault(); return; }
+  }
+});
+
+/* =======================================================================
+   Generiske former
+   ======================================================================= */
+$("#nyFraBilde").addEventListener("click", apneImport);
+$("#nyGenerisk").addEventListener("click", e => {
+  const gammel = $("#generiskMeny");
+  if (gammel) { gammel.remove(); return; }
+  const meny = document.createElement("div");
+  meny.id = "generiskMeny";
+  meny.style.cssText = "position:absolute;z-index:40;background:var(--panel-2);border:1px solid var(--line);" +
+    "border-radius:8px;padding:5px;display:flex;flex-direction:column;gap:3px;box-shadow:0 8px 24px #0008";
+  const r = e.target.getBoundingClientRect();
+  meny.style.left = r.left + "px"; meny.style.top = (r.bottom + 4) + "px";
+  for (const g of GENERISKE) {
+    const b = document.createElement("button");
+    b.textContent = g.navn;
+    b.style.textAlign = "left";
+    b.addEventListener("click", () => {
+      pushAngre();
+      const f = normaliserForm({
+        navn: g.navn.replace(" (generisk)", ""), farge: nesteFarge(),
+        pkt: skalerTil(g.lag(), g.b, g.h)
+      });
+      S.former.push(f); S.valgt = f.id;
+      meny.remove(); altOppdater(); tilpassVisning();
+    });
+    meny.appendChild(b);
+  }
+  document.body.appendChild(meny);
+  setTimeout(() => {
+    const lukk = ev => { if (!meny.contains(ev.target)) { meny.remove(); document.removeEventListener("click", lukk); } };
+    document.addEventListener("click", lukk);
+  }, 0);
+});
+
+/* =======================================================================
+   Oppstart
+   ======================================================================= */
+for (const [navn, tetthet] of TRESLAG) {
+  const o = document.createElement("option");
+  o.value = navn; o.textContent = navn + " (" + tetthet + " kg/m³)";
+  $("#mTre").appendChild(o);
+}
+
+window.addEventListener("resize", () => { passStorrelse(); tegn(); if (!$("#import").hidden) { iPass(); iTegn(); } });
+
+(async function start() {
+  hentInnstillinger();
+  $("#mTre").value = S.tre;
+  $("#skyUrl").value = sky.url;
+  $("#skyToken").value = sky.token;
+  $("#skyAuto").checked = sky.auto;
+  if (!sky.url) sky.tilstand = "avslaatt";
+  passStorrelse();
+
+  let ferskBase = false;
+  try {
+    await apneBase();
+    const flyttet = await overforGammelt();
+    const poster = await basen.alle();
+    ferskBase = poster.length === 0;
+    S.former = poster.map(normaliserForm);
+    if (flyttet) hint(flyttet + " former flyttet fra nettleserlageret inn i den lokale basen.");
+  } catch (e) {
+    // Uten IndexedDB virker verktøyet fortsatt, men ingenting blir husket.
+    ferskBase = true;
+    hint("Fikk ikke åpnet den lokale basen, så ingenting lagres denne økta: " + e);
+  }
+  for (const f of S.former) sisteAvtrykk.set(f.id, avtrykk(f));
+
+  // Det delte biblioteket er åpent å lese, så vi henter ned uansett om vi har
+  // token. En tom base skal hente FØR den lager noe: ellers ville hver nye
+  // maskin dyttet sin egen utgangsform opp i biblioteket, og en førstegangs
+  // besøkende sett en tom side i stedet for formene som finnes.
+  if (sky.url && sky.auto) {
+    if (ferskBase) { try { await synk(true); } catch (e) { /* offline er greit */ } }
+    else synkSnart();
+  }
+
+  // Bare en helt tom base får en utgangsform. Har du slettet alt, står
+  // gravsteinene igjen, og da skal den ikke dukke opp på nytt.
+  if (ferskBase && !iBiblioteket().length) {
+    const g = GENERISKE[0];
+    const f = normaliserForm({ navn: "Enkeltcut", farge: PALETT[0], pkt: skalerTil(g.lag(), g.b, g.h) });
+    S.former.push(f);
+    S.valgt = f.id;
+  }
+  if (!S.former.some(f => f.id === S.valgt && f.paaLerret && !f.slettet)) {
+    const p = paaLerret();
+    S.valgt = p.length ? p[0].id : null;
+  }
+
+  altOppdater();
+  if (!S.visning.panX && !S.visning.panY) tilpassVisning();
+  settVerktoy("pan");
+})();
+</script>
+</body>
+</html>

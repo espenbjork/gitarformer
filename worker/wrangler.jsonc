@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gitarformer",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-26",
+  "observability": { "enabled": true },
+  "workers_dev": true,
+  "preview_urls": false,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gitarformer",
+      "database_id": "fe90d67a-aa7a-46ad-8ebe-ff1cc50431a6"
+    }
+  ]
+}
