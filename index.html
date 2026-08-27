@@ -1435,6 +1435,10 @@ function tegn() {
 }
 
 function tilpassVisning() {
+  // Canvaset kan være uten størrelse ennå når dette kalles rett etter lasting.
+  // Uten denne blir (sceneB - 80) negativ, og zoomen klemmes til minimum.
+  if (sceneB < 60 || sceneH < 60) passStorrelse();
+  if (sceneB < 60 || sceneH < 60) return;
   const synlige = synligeFormer();
   if (!synlige.length) { S.visning.zoom = 1.1; S.visning.panX = S.visning.panY = 0; tegn(); return; }
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -2609,8 +2613,12 @@ window.addEventListener("resize", () => { passStorrelse(); tegn(); if (!$("#impo
   }
 
   altOppdater();
-  if (!S.visning.panX && !S.visning.panY) tilpassVisning();
   settVerktoy("pan");
+  // Vent på at oppsettet har satt seg før utsnittet tilpasses.
+  requestAnimationFrame(() => {
+    passStorrelse();
+    if (!S.visning.panX && !S.visning.panY) tilpassVisning(); else tegn();
+  });
 })();
 </script>
 </body>
