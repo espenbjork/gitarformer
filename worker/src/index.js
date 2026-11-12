@@ -17,7 +17,8 @@ const TILLATTE_OPPHAV = new Set([
   "null",                          // file:// sender Origin: null
   "http://localhost:8731",
   "http://127.0.0.1:8731",
-  "https://espenbjork.github.io"
+  "https://espenbjork.github.io",
+  "https://espenbjork.no"
 ]);
 
 const MAKS_FORMER_PER_KALL = 500;
